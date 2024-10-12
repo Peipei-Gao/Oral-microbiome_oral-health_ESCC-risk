@@ -1,3 +1,8 @@
+################################################################################################################################################
+#
+# Overview plot of the oral health , oral microbiome in multiple kingdoms, and the risk of escc
+#
+##############################################################################################################################################
 
 # 1) Logit res of the association between oral health and escc risk
 form0_mini <- 'age+Sex'
@@ -54,6 +59,84 @@ p_orl <- ggplot(data=data,aes(y=Pheno,x=OR))+
 pdf(paste0(nuts_wd,'/batchALL/Overview/ESCC_Oral_logit.pdf'),width=5,height=4)
 p_orl 
 dev.off()
+
+
+#2.stack plot
+p_stac <- ggplot(df_phy, aes(x=sample_id,fill=clade,y = reabun))+
+  geom_col(position='stack')+labs(x='Samples', y='Relative Abundance (%)')+
+  scale_fill_manual(values = col_phy)+
+  facet_grid(.~group)+
+  labs(x='Samples',y='Relative abundance')+
+  theme(legend.position = "none",panel.background = element_blank(),
+        plot.title = element_blank(),
+        axis.title=element_text(size=20),
+        axis.ticks.x = element_blank(),
+        axis.text.y=element_text(size=20,angle=90),
+        axis.text.x = element_blank()); 
+#3.richness plot
+p_rich <- ggplot(dat_alpha2 %>% mutate(king=factor(king,levels=kings)),
+                 aes(x=log(chao1,10),y=pielou,group=king,color=king,fill=king))+
+  geom_point(alpha=0.75,size=1.5)+ 
+  stat_density_2d(linewidth=1, geom="polygon", bins=20)+
+  scale_color_manual(values=kings_cor)+
+  scale_fill_manual(values=kings_cor)+
+  labs(x='Richness (Chao1, log 10)',y='Evenness (Pielou)',color='Kingdom')+
+  theme_bw()+ 
+  theme(axis.title = element_text(size=16),
+        legend.title=element_text(size=15),legend.text=element_text(size=14),
+        axis.text.y = element_text(size=15,angle=90,hjust=0.5),
+        axis.text.x = element_text(size=15)); p_rich
+
+pdf(paste0(nuts_wd,"/kingdoms/abundance/Richness_index.pdf"),height=4,width=4)
+p_rich 
+dev.off()
+
+#4.explained variation
+plots <- c()
+for (i in kings[1:4]){
+  path <- paste0(sv_wd,i,'/abundance/PCoA_plot/PCoA_expalined_variance.xlsx')
+  perm_p <- read.xlsx(path);perm_p <- rename_pheno(perm_p,Pheno)
+  perm_p <- perm_p%>% mutate(group=factor(group,levels=rev(group_lvl)),
+                             Pheno=factor(Pheno,levels=phe_PCo_lvl),
+                             king=i) %>% arrange(Pheno,group)
+  explain_var <- ggplot(perm_p,aes(x = Pheno, y = R2))+
+    geom_bar(aes(x=Pheno, y=R2,fill=group), stat="identity",width=0.85)+
+    geom_text(aes(x=Pheno,y=R2,label=anno),
+              size=3)+
+    theme_classic()+labs(y='',x='')+ 
+    scale_fill_manual(values = group_color)+ 
+    coord_flip()+
+    facet_grid(.~king)+
+    theme(legend.position = "none",
+          plot.title = element_text(size=25),
+          axis.title.x=element_blank(),
+          axis.text.y=element_blank(),
+          axis.text.x=element_text(size=20)); 
+  plots[[i]] <- explain_var
+}
+
+pdf(paste0(sv_wd,'kingdoms/abundance/PCoA_explained_variation_CTR.pdf'),width=16,height=4,onefile = F)#,width = 1200,height = 900,res = 300)
+egg::ggarrange(plots,ncol = 4,widths=c(1,1,1,1))
+dev.off()
+
+
+#legend--
+explain_var_lg <- ggplot(perm_p%>% mutate(group=factor(group,levels=group_lvl)))+
+  geom_bar(aes(x=var, y=R2,fill=group), stat="identity")+
+  geom_text(aes(x=var,y=R2,label=anno),size=3)+
+  theme_classic()+labs(y='Explained variation (%)',x='')+
+  scale_fill_manual(values = group_color)+ 
+  labs(fill='Group')+
+  theme(legend.position = "right",
+        legend.text = element_text(size=25),
+        legend.title = element_text(size=20,color='black',face='bold'),
+        axis.text=element_blank()); explain_var_lg
+pdf(paste0(sv_wd,'/kingdoms/abundance/PCoA_explained_variation_legend.pdf'),width=1.5,height=1)
+grid.draw(ggpubr::get_legend(explain_var_lg))
+dev.off()
+
+
+
 
 
 
