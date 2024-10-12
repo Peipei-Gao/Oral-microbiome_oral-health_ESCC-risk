@@ -189,3 +189,29 @@ circos.track(track.index = 1,
              }) 
 dev.off()
 
+
+
+#stack plot
+tem_col=genus_color$color; names(tem_col)=genus_color$Genus
+tem_med=df_cr %>% mutate(Pheno=factor(Pheno,levels=pheno_lvl),
+                         Prop_Med_estimate=Prop_Med_estimate) %>% 
+  arrange(Pheno,desc(Prop_Med_estimate)) %>% 
+  mutate(Genus=factor(Genus,levels=levels(med_sum$Genus)))
+p_stac <- ggplot(tem_med)+
+  geom_col(aes(x=Pheno,y=Prop_Med_estimate,fill=Genus),alpha=0.8)+
+  scale_fill_manual(values=tem_col)+
+  scale_y_continuous(expand=c(0,0))+
+  theme_classic()+
+  labs(x='',y='Microbial features')+
+  theme(legend.position = 'none',
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x=element_text(size=20,angle=45),
+        axis.title.y=element_text(size=20),
+        axis.title.x=element_blank()); p_stac
+
+
+pdf(paste0(nuts_wd,'/kingdoms/ESCC/Mediate/TX_ESCC_oral_mediate_stack.pdf',sep=''),
+    width=8,height=4)
+p_stac 
+dev.off()
