@@ -1,0 +1,258 @@
+
+
+
+setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
+load("/Results/metagenome/escc/dat_analysis.RData")
+
+#data pre
+gdata::keep(dat_phe,dat_alpha2,phe_PCo_lvl,sure=T)
+
+
+
+##figure 2A-alpha-escc---
+i=kings[1]
+data1=dat_alpha2 %>% filter(king %in% i); res=res_alpha %>% filter(king %in% i)
+p1 <- ggplot(data1,aes(x=cc_chr,y=log(chao1,10),fill=cc_chr))+
+
+  geom_point(aes(color=cc_chr),position = position_jitter(0.25),
+              alpha=0.6,size=1)+
+  geom_boxplot(width=0.3,alpha=0.85,size=0.8)+
+  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  annotate("text",x=1.5,y=max(log(data1$chao1,10)),size=6,
+           label=bquote(paste(italic('*p')~.(res$chao1_t))))+
+  labs(y='Chao1 index (log10)')+ 
+  theme_classic()+
+  theme(axis.title.x = element_blank(),
+        legend.position = 'none',
+        plot.title = element_text(size=20),
+        axis.title.y=element_text(size=20),
+        axis.text.x =element_text(size=20),
+        axis.text.y = element_text(size=20,angle=90));p1
+
+p2 <- ggplot(data1,aes(x=cc_chr,y=pielou,fill=cc_chr))+
+  geom_point(aes(color=cc_chr),position = position_jitter(0.25),
+              alpha=0.6,size=1)+
+  geom_boxplot(width=0.3,alpha=0.85,size=0.6)+
+  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_x_discrete(labels=unique(dat_alpha2$cc_chr),expand=c(0.23,0.23))+
+  annotate("text",x=1.5,y=max(data1$pielou)+0.06,size=6,
+           label=bquote(paste(italic('*p')~.(res$pielou_t))))+
+  labs(y='Pielou index')+ 
+  theme_classic()+ 
+  theme(axis.title.x = element_blank(),
+        panel.grid.major.y  = element_blank(),
+        legend.position = 'none',
+        plot.title = element_text(size=20),
+        axis.title.y=element_text(size=20),
+        axis.text.x =element_text(size=20),
+        axis.text.y = element_text(size=20));p2
+p3 <- ggplot(data1,aes(x=cc_chr,y=shannon,fill=cc_chr))+
+  geom_point(aes(color=cc_chr),position = position_jitter(0.25),
+              alpha=0.6,size=1)+
+  geom_boxplot(width=0.3,alpha=0.85,size=0.8)+
+  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_x_discrete(labels=unique(dat_alpha2$cc_chr),expand=c(0.23,0.23))+
+annotate("text",x=1.5,y=max(data1$shannon)+0.2,size=6,
+           label=bquote(paste(italic('p')~.(res$shan_t))))+
+  labs(y='Shannon index')+ 
+  theme_classic()+ 
+  theme(axis.title.x = element_blank(),
+        panel.grid.major.y  = element_blank(),
+        legend.position = 'none',
+        plot.title = element_text(size=20),
+        axis.title.y=element_text(size=20),
+        axis.text.x =element_text(size=20),
+        axis.text.y = element_text(size=20));p3
+
+p4 <- ggplot(data1,aes(x=cc_chr,y=simpson,fill=cc_chr))+
+  geom_point(aes(color=cc_chr),position = position_jitter(0.25),
+              alpha=0.6,size=1)+
+  geom_boxplot(width=0.3,alpha=0.85,size=0.6,outlier.shape=NA)+
+  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_x_discrete(labels=unique(dat_alpha2$cc_chr))+
+  labs(y='Simpson index')+ 
+  theme_classic()+ 
+  theme(axis.title.x = element_blank(),
+        panel.grid.major.y  = element_blank(),
+        legend.position = 'none',
+        plot.title = element_text(size=20),axis.title.y=element_text(size=20),
+        axis.text.x =element_text(size=20),axis.text.y = element_text(size=20,angle=90));p4
+pdf(paste0(sv_wd,'/Bacteria/abundance/Figure2_alpha_',i,'.pdf'),width=9.2,height=3.8,onefile=F) 
+egg::ggarrange(p1,p2,p3,p4,nrow=1,widths=c(1,1,1,1))
+dev.off()
+
+
+
+##**figure 2B ESCC-----
+var='cc_chr';var1='ESCC';i='Bacteria'
+#data
+dat_pcoa0 <- read.xlsx(paste0(nuts_wd,i,'/abundance/Batch_correct_pcoa.xlsx'))
+head(dat_pcoa0)
+dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) %>% inner_join(dat_phe,by='sample_id') %>% 
+  mutate(cc_chr=factor(ifelse(cc==0,'Control','ESCC'),levels=c('Control','ESCC'))) %>% 
+  mutate(age_2g=ifelse(age>=65,'2','1'))
+explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
+#p
+path <- paste0(sv_wd,i,'/abundance/PCoA_plot/PCoA_expalined_variance_j.xlsx')
+perm_p <- read.xlsx(path)
+R2 <- paste0(format(round(perm_p[perm_p$var %in% var1,]$R2,2),nsmall=2),'%')
+
+p2 <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
+  geom_point(aes_string(color=var,fill=var),shape=21,size=2.6,alpha=0.85,na.rm=T)+ 
+  scale_fill_manual(values=escc_fill)+scale_color_manual(values=escc_color)+  
+  labs(title=var1,
+       x=paste0("PCo1 (", explainedvar1, ")"),
+       y=paste0("PCo2 (", explainedvar2, ")"),color='Group')+
+  theme_classic()+ 
+  theme(plot.title = element_blank(), 
+        legend.position = 'none', 
+        legend.text=element_text(size=20),
+        legend.title=element_text(size=20),
+        axis.title=element_text(size=20), 
+        axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20)); p2
+
+p2_2 <- ggplot(dat_pcoa,aes(x=cc_chr,y=X2))+
+  geom_boxplot(aes(fill=cc_chr),alpha=0.85,size=0.5,#width=0.5,
+               outlier.size = 0.7,outlier.color = 'grey50')+
+  scale_fill_manual(values=lvl2_color)+
+  theme_classic()+
+  theme(panel.grid  = element_blank(),
+        axis.title = element_blank(),
+        plot.title = element_text(size=20),
+        axis.text.x = element_text(size=14,angle=30),
+        legend.position = 'none',
+        axis.text.y = element_blank()); p2_2
+
+p2_r <- ggplot(dat_pcoa)+
+  geom_density_ridges2(aes(y=cc_chr,x=X2,
+                           fill=cc_chr),color="grey30",linewidth=0.4,
+                       alpha=0.75,height=0.5)+coord_flip()+
+  scale_fill_manual(values=escc_color)+
+  scale_color_manual(values=lvl2_color)+
+  theme_classic()+ 
+  labs(fill='',x='',y='')+
+  theme(panel.border = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),  
+        axis.title = element_blank(),
+        axis.text = element_blank(),  
+        legend.position = 'none');p2_r
+
+
+p2_t <- ggplot(dat_pcoa)+
+  geom_density_ridges2(aes(x=X1,y=cc_chr,
+                           fill=cc_chr),color="grey30", 
+                       alpha=0.75,height=0.5)+
+  scale_fill_manual(values=escc_color)+
+  scale_color_manual(values=lvl2_color)+
+  theme_classic()+
+  labs(title='', y='',x=paste0("PCo1 (", explainedvar1, ")"))+
+  theme(axis.line = element_blank(),
+        axis.ticks =element_blank(),
+        axis.title = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = 'none'); p2_t
+
+pdf(paste0(sv_wd,'/Bacteria/abundance/Figure1_PCoA_',var1,'_j.pdf'),width=5,height=5)
+egg::ggarrange(p2_t,blank,p2,p2_r,nrow = 2,widths = c(5,1),heights=c(1,5))
+dev.off()
+
+#legend--
+var1='ESCC'
+p2_leg <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
+  geom_point(aes_string(color=var,fill=var),shape=21,size=5)+
+  theme_void()+
+  theme(legend.position='bottom',legend.key.spacing.x = unit(0.02,'cm'),
+        legend.title =  element_text(size=20,face='bold'),
+        legend.text = element_text(size=20)); p2_leg
+pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend.pdf'),width=3,height=0.5)
+grid.draw(ggpubr::get_legend(p2_leg))
+dev.off()
+#density legend
+p2_2_leg <- ggplot(dat_pcoa)+
+  geom_boxplot(aes(x=X1,y=cc_chr,
+                   fill=cc_chr),color="grey30",alpha=0.85,size=0.35)+
+  scale_fill_manual(values=escc_color,name='Group')+
+  scale_color_manual(values=lvl2_color)+
+  theme_void()+
+  theme(panel.grid  = element_blank(),
+        legend.position = 'right',legend.text=element_text(size=20),
+        legend.title=element_text(size=18,face='bold'),
+        axis.text.y = element_blank()); p2_2_leg
+pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend2.pdf'),width=1.1,height=0.9)
+grid.draw(ggpubr::get_legend(p2_2_leg))
+dev.off()
+
+
+
+##**Sfigure: PCOA-ESCC----
+res <- c()
+for (i in kings[2:4]){
+  var='cc_chr';var1='ESCC'
+  dat_pcoa0 <- read.xlsx(paste0(nuts_wd,i,'/abundance/dat_pcoa.xlsx'))
+  head(dat_pcoa0)
+  dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) 
+  explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);
+  explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
+  #p
+  path <- paste0(sv_wd,i,'/abundance/PCoA_plot/PCoA_expalined_variance_j.xlsx')
+  perm_p <- read.xlsx(path)
+  R2 <- paste0(format(round(perm_p[perm_p$var %in% var1,]$R2,2),nsmall=2),'%')
+
+  p2 <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
+    geom_point(aes_string(color=var,fill=var),shape=21,size=5)+
+    scale_fill_manual(values=escc_fill)+
+    scale_color_manual(values=escc_color)+  
+    labs(title=var1,
+         subtitle=bquote(paste('PERMANOVA, ',R^2~'=',.(R2),','~italic(q)~'=',.(q))),
+         x=paste0("PCo1 (", explainedvar1, ")"),
+         y=paste0("PCo2 (", explainedvar2, ")"),color='Group')+
+    theme_classic()+ 
+    theme(plot.title = element_blank(),
+          plot.subtitle = element_text(size=20,hjust=0),
+          legend.position = 'none',
+          axis.title=element_text(size=20),
+          axis.text.x = element_text(size=20),
+          axis.text.y = element_text(size=20)); p2
+  
+  p2_r <- ggplot(dat_pcoa)+
+    geom_boxplot(aes(x=cc_chr,y=X2,fill=cc_chr),
+                 alpha=0.85,size=1)+
+    scale_fill_manual(values=escc_color)+
+    scale_color_manual(values=lvl2_color)+
+    theme_classic()+ 
+    labs(fill='',x='',y='')+
+    theme(panel.border = element_blank(),
+          axis.line = element_blank(),
+          axis.ticks = element_blank(), 
+          axis.title = element_blank(),
+          axis.text = element_blank())
+
+          
+  p2_t <- ggplot(dat_pcoa)+
+    geom_boxplot(aes(x=X1,y=cc_chr,fill=cc_chr),
+                 alpha=0.85,size=0.5,width=0.7,color='gray30')+#,#width=0.5,
+    scale_fill_manual(values=escc_color)+
+    scale_color_manual(values=lvl2_color)+
+    theme_classic()+
+    labs(title='', y='',x=paste0("PCo1 (", explainedvar1, ")"))+
+    theme(axis.line = element_blank(),axis.ticks =element_blank(),
+          axis.title = element_blank(),
+          axis.text.y = element_blank(),
+          axis.text.x = element_blank(),
+          legend.position = 'none'); p2_t
+  
+  pdf(paste0(sv_wd,'/kingdoms/abundance/Sfigure_PCoA_',var1,'_',i,'.pdf'),width=5,height=5)
+  egg::ggarrange(p2_t,blank,p2,p2_r,nrow = 2,widths = c(5,1),heights=c(1,5))
+  dev.off()
+}
+
+
+
+
+
+
+
+
