@@ -21,6 +21,7 @@ fit_data_taxa_cc <- Maaslin2(
   input_metadata = dat_beta_pheno,
   output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
   transform = "AST",
+  fixed_effects=c('cc',base_num_maaslin_cc),
   plot_heatmap=F,plot_scatter=F,
   reference=c('Sex,Men',"Marriage,Unmarried",
               'Education,Illiteracy',
@@ -41,10 +42,10 @@ head(res_archaea_cc);dim(res_archaea_cc)
 #q_val
 res_archaea_cc_sig <- filter(res_archaea_cc,qval<0.1); 
 dim(res_archaea_cc_sig) 
-#—【1】Spe-ESCC-Oral health--
+#—Spe-ESCC-Oral health--
 #oral
 for (i in c(oral_mas)){
-  col_name <- c(i,c('cc',base_maaslin))
+  col_name <- c(i,c('cc',base_maaslin_orl))
   fit_data_taxa_oral <- Maaslin2(
     input_data = dat_spe,
     output = paste0(mas_wd,"/Maaslin_Oral_j/Maaslin_taxa_output_",i,sep=''),
@@ -79,6 +80,7 @@ fit_data_taxa_cc <- Maaslin2(
   input_metadata = dat_beta_pheno,
   output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
   transform = "AST",
+  fixed_effects=c('cc',base_num_maaslin_cc),
   plot_heatmap=F,plot_scatter=F,
   reference=c('Sex,Men',"Marriage,Unmarried",
               'Education,Illiteracy','Family_history_EC,No',
@@ -100,10 +102,10 @@ head(res_virus_cc);dim(res_virus_cc)
 #q_val
 res_virus_cc_sig <- filter(res_virus_cc,qval<0.1); dim(res_virus_cc_sig) #fdr<0.05:4个
 
-#—【2.8.1】Spe-ESCC-Oral health--
+#—Spe-ESCC-Oral health--
 #oral
 for (i in c(oral_mas)){
-  col_name <- c(i,c('cc',base_maaslin))
+  col_name <- c(i,c('cc',base_maaslin_orl))
   fit_data_taxa_oral <- Maaslin2(
     input_data = dat_spe,
     input_metadata = dat_beta_pheno,
@@ -144,6 +146,7 @@ fit_data_taxa_cc <- Maaslin2(
   input_metadata = dat_beta_pheno,
   output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
   transform = "AST",
+  fixed_effects=c('cc',base_num_maaslin_cc),
   plot_heatmap=F,plot_scatter=F,
   reference=c('Sex,Men',"Marriage,Unmarried",
               'Education,Illiteracy','Family_history_EC,No',
@@ -165,10 +168,10 @@ head(res_fungi_cc);dim(res_fungi_cc)
 #q_val
 res_fungi_cc_sig <- filter(res_fungi_cc,qval<0.1); dim(res_fungi_cc_sig)
 
-#—【2.8.1】Spe-ESCC-Oral health--
+#—Spe-ESCC-Oral health--
 #oral
 for (i in c(oral_mas)){
-  col_name <- c(i,c('cc',base_maaslin))
+  col_name <- c(i,c('cc',base_maaslin_orl))
   fit_data_taxa_oral <- Maaslin2(
     input_data = dat_spe,
     input_metadata = dat_beta_pheno,
