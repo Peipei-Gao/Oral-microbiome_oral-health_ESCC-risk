@@ -100,7 +100,8 @@ p2 <- ggplot(data1,aes(x=cc_chr,y=pielou,fill=cc_chr))+
   geom_point(aes(color=cc_chr),position = position_jitter(0.25),
               alpha=0.6,size=1)+
   geom_boxplot(width=0.3,alpha=0.85,size=0.6)+
-  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_fill_manual(values=lvl2_color)+
+  scale_color_manual(values=lvl2_color)+
   scale_x_discrete(labels=unique(dat_alpha2$cc_chr),expand=c(0.23,0.23))+
   annotate("text",x=1.5,y=max(data1$pielou)+0.06,size=6,
            label=bquote(paste(italic('*p')~.(res$pielou_t))))+
@@ -117,7 +118,8 @@ p3 <- ggplot(data1,aes(x=cc_chr,y=shannon,fill=cc_chr))+
   geom_point(aes(color=cc_chr),position = position_jitter(0.25),
               alpha=0.6,size=1)+
   geom_boxplot(width=0.3,alpha=0.85,size=0.8)+
-  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_fill_manual(values=lvl2_color)+
+  scale_color_manual(values=lvl2_color)+
   scale_x_discrete(labels=unique(dat_alpha2$cc_chr),expand=c(0.23,0.23))+
 annotate("text",x=1.5,y=max(data1$shannon)+0.2,size=6,
            label=bquote(paste(italic('p')~.(res$shan_t))))+
@@ -135,15 +137,18 @@ p4 <- ggplot(data1,aes(x=cc_chr,y=simpson,fill=cc_chr))+
   geom_point(aes(color=cc_chr),position = position_jitter(0.25),
               alpha=0.6,size=1)+
   geom_boxplot(width=0.3,alpha=0.85,size=0.6,outlier.shape=NA)+
-  scale_fill_manual(values=lvl2_color)+scale_color_manual(values=lvl2_color)+
+  scale_fill_manual(values=lvl2_color)+
+  scale_color_manual(values=lvl2_color)+
   scale_x_discrete(labels=unique(dat_alpha2$cc_chr))+
   labs(y='Simpson index')+ 
   theme_classic()+ 
   theme(axis.title.x = element_blank(),
         panel.grid.major.y  = element_blank(),
         legend.position = 'none',
-        plot.title = element_text(size=20),axis.title.y=element_text(size=20),
-        axis.text.x =element_text(size=20),axis.text.y = element_text(size=20,angle=90));p4
+        plot.title = element_text(size=20),
+        axis.title.y=element_text(size=20),
+        axis.text.x =element_text(size=20),
+        axis.text.y = element_text(size=20,angle=90));p4
 pdf(paste0(sv_wd,'/Bacteria/abundance/Figure2_alpha_',i,'.pdf'),width=9.2,height=3.8,onefile=F) 
 egg::ggarrange(p1,p2,p3,p4,nrow=1,widths=c(1,1,1,1))
 dev.off()
@@ -155,18 +160,23 @@ var='cc_chr';var1='ESCC';i='Bacteria'
 #data
 dat_pcoa0 <- read.xlsx(paste0(nuts_wd,i,'/abundance/Batch_correct_pcoa.xlsx'))
 head(dat_pcoa0)
-dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) %>% inner_join(dat_phe,by='sample_id') %>% 
-  mutate(cc_chr=factor(ifelse(cc==0,'Control','ESCC'),levels=c('Control','ESCC'))) %>% 
+dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) %>% 
+    inner_join(dat_phe,by='sample_id') %>% 
+  mutate(cc_chr=factor(ifelse(cc==0,'Control','ESCC'),
+    levels=c('Control','ESCC'))) %>% 
   mutate(age_2g=ifelse(age>=65,'2','1'))
-explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
+explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);
+explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
 #p
 path <- paste0(sv_wd,i,'/abundance/PCoA_plot/PCoA_expalined_variance_j.xlsx')
 perm_p <- read.xlsx(path)
 R2 <- paste0(format(round(perm_p[perm_p$var %in% var1,]$R2,2),nsmall=2),'%')
 
 p2 <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
-  geom_point(aes_string(color=var,fill=var),shape=21,size=2.6,alpha=0.85,na.rm=T)+ 
-  scale_fill_manual(values=escc_fill)+scale_color_manual(values=escc_color)+  
+  geom_point(aes_string(color=var,fill=var),
+    size=2.6,alpha=0.85,na.rm=T)+ 
+  scale_fill_manual(values=escc_fill)+
+    scale_color_manual(values=escc_color)+  
   labs(title=var1,
        x=paste0("PCo1 (", explainedvar1, ")"),
        y=paste0("PCo2 (", explainedvar2, ")"),color='Group')+
@@ -193,7 +203,8 @@ p2_2 <- ggplot(dat_pcoa,aes(x=cc_chr,y=X2))+
 
 p2_r <- ggplot(dat_pcoa)+
   geom_density_ridges2(aes(y=cc_chr,x=X2,
-                           fill=cc_chr),color="grey30",linewidth=0.4,
+                           fill=cc_chr),color="grey30",
+                           linewidth=0.4,
                        alpha=0.75,height=0.5)+coord_flip()+
   scale_fill_manual(values=escc_color)+
   scale_color_manual(values=lvl2_color)+
@@ -231,7 +242,8 @@ var1='ESCC'
 p2_leg <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
   geom_point(aes_string(color=var,fill=var),shape=21,size=5)+
   theme_void()+
-  theme(legend.position='bottom',legend.key.spacing.x = unit(0.02,'cm'),
+  theme(legend.position='bottom',
+        legend.key.spacing.x = unit(0.02,'cm'),
         legend.title =  element_text(size=20,face='bold'),
         legend.text = element_text(size=20)); p2_leg
 pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend.pdf'),width=3,height=0.5)
@@ -245,7 +257,8 @@ p2_2_leg <- ggplot(dat_pcoa)+
   scale_color_manual(values=lvl2_color)+
   theme_void()+
   theme(panel.grid  = element_blank(),
-        legend.position = 'right',legend.text=element_text(size=20),
+        legend.position = 'right',
+        legend.text=element_text(size=20),
         legend.title=element_text(size=18,face='bold'),
         axis.text.y = element_blank()); p2_2_leg
 pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend2.pdf'),width=1.1,height=0.9)
@@ -273,7 +286,6 @@ for (i in kings[2:4]){
     scale_fill_manual(values=escc_fill)+
     scale_color_manual(values=escc_color)+  
     labs(title=var1,
-         subtitle=bquote(paste('PERMANOVA, ',R^2~'=',.(R2),','~italic(q)~'=',.(q))),
          x=paste0("PCo1 (", explainedvar1, ")"),
          y=paste0("PCo2 (", explainedvar2, ")"),color='Group')+
     theme_classic()+ 
@@ -300,7 +312,7 @@ for (i in kings[2:4]){
           
   p2_t <- ggplot(dat_pcoa)+
     geom_boxplot(aes(x=X1,y=cc_chr,fill=cc_chr),
-                 alpha=0.85,size=0.5,width=0.7,color='gray30')+#,#width=0.5,
+                 alpha=0.85,size=1,width=1,color='gray30')+
     scale_fill_manual(values=escc_color)+
     scale_color_manual(values=lvl2_color)+
     theme_classic()+
@@ -317,9 +329,115 @@ for (i in kings[2:4]){
 }
 
 
+#upset--
+upset_sig <- unique(c(res_mas_cc_sig$Feature,res_mas_orl_sig$Feature)); 
+length(upset_sig)
+res_upset <- data.frame(bind_rows(res_mas_cc, res_mas_orl)) %>% 
+  mutate(group=case_when(Pheno %in% c('cc')~'ESCC',
+                    Pheno %in% oral_num~'Oral health',) ) 
+res_upset <- rename_pheno(res_upset) %>% 
+  mutate(Pheno=factor(Pheno,levels=c('ESCC',pheno_lvl))) 
+
+df_upset <- data.frame(matrix(nrow=length(upset_sig),
+                              ncol=length(unique(res_upset$Pheno))+1)) %>% 
+  set_names(c('Feature',levels(res_upset$Pheno)))
+df_upset$Feature <- upset_sig
+
+for (phe in c(unique(res_upset$Pheno)) ){
+  for (spe in upset_sig){
+    if (any(res_upset$Feature == spe & 
+            res_upset$Pheno == phe & 
+            res_upset$qval< 0.1)) {
+      df_upset[df_upset$Feature == spe, phe] <- 1
+    } else {
+      df_upset[df_upset$Feature == spe, phe] <- 0
+    }
+  }
+}
+df_upset <- df_upset %>% 
+  left_join(tax[,c('Phylum','Feature')],by='Feature')
+
+col_upset=alpha(phy_color$Color,alpha=1); 
+names(col_upset) = phy_color$phylum
 
 
+upset_oral_spe <- upset(df_upset,
+                        intersect=colnames(df_upset)[-c(1,ncol(df_upset))],
+                        name='',sort_intersections_by=c('degree'),
+                        height_ratio=0.6,width_ratio=0.4,
+                        base_annotations=list(
+                          'Intersection size'=intersection_size(
+                            text=list(size=15),
+                            mapping=aes(fill=Phylum)) +
+                            scale_fill_manual(values=col_upset)+
+                            labs(x='')+
+                            theme(axis.title = element_blank(),
+                                  axis.text.y=element_text(size=20)), 
+                          set_sizes=(
+                            upset_set_size(
+                              geom=geom_bar(width=1,fill='gray50'),
+                              position='right')+labs(x='Set size')+
+                              theme(panel.grid = element_blank(),
+                                    legend.position = 'none',
+                                    axis.text = element_text(size=20))) ));
 
+pdf(paste0(sv_wd,"/Bacteria/Maaslin_CC_j/Upset_oral_spe_all.pdf"),width=15,height=8)
+upset_oral_spe
+dev.off()
+
+##  informal scatter plor---
+color_2tem=c('#FD8D3C','#009EBC')
+spe_show=c("s_Campylobacter_rectus",'s_Alloprevotella_tannerae')
+
+data=copy(dat_spe_phe) %>% 
+  mutate(cc_chr=ifelse(cc_chr=='Cases','ESCC','Control'))
+plots1 <- c()
+for (n in 1:length(spe_show)){
+  i=spe_show[n];i_nm=spe_show_nm[n];phe_nm=''
+  phe=c('cc_chr');q=p_3dg_anno(qv[qv$Pheno=='cc' & qv$Feature %in% i,]$qval)
+    p=ggplot(data, aes(x=phe,y=i,fill=phe,color=phe))+
+    geom_point(alpha=0.8,size=1)+
+    geom_violin(width=0.8,alpha=0.85,color='black')+
+    scale_fill_manual(values=lvl2_color,
+                      labels=c('Control','ESCC'))+
+      scale_color_manual(values=lvl2_color,
+                         labels=c('Control','ESCC'))+
+    labs(y=i_nm,x=phe_nm,title='')+ 
+    theme_classic()+ 
+    theme(panel.grid = element_blank(),
+          legend.position = 'none',
+          axis.title.y=element_text(size=20),
+          axis.title.x = element_text(size=20),
+          axis.text.x = element_text(size=20),
+          axis.text.y = element_text(size=20,angle=90)); p
+  plots1[n]= p
+}
+
+#scatter plot
+plots2 <- c()
+for (n in 1:length(spe_show)){
+  i=spe_show[n]; i_nm=spe_show_nm[n];phe_nm=''
+  phe=c('orl_score');q=p_3dg_anno(qv[qv$Pheno=='orl_score' & qv$Feature %in% i,]$qval)
+  p=ggplot(data, aes(x=phe,y=i))+
+    geom_point(col='#009EBC', alpha=0.85, size=1)+
+    geom_smooth(method=lm, linewidth=1.4, color='#FD8D3C',fill='#FD8D3C33')+
+    labs(y=i_nm,x=phe_nm,title='')+ 
+    theme_classic()+ 
+    theme(panel.grid = element_blank(),
+          legend.position = 'none',
+          plot.subtitle = element_text(size=20),
+          axis.title.y=element_text(size=20),
+          axis.title.x = element_text(size=20),
+          axis.text.x = element_text(size=20),
+          axis.text.y = element_text(size=20,angle=90));p
+  plots2[n] <- p
+}
+
+
+pdf(paste0(sv_wd,"/Bacteria/Maaslin_CC_j/Scatter_spe_cc_orlscore.pdf"),
+    width=10,height=8)
+egg::ggarrange(plots1,plots2,nrow=2)
+dev.off()
 
 
 
