@@ -1,0 +1,191 @@
+#
+# Association between oral health and escc risk mediated by oral microbial profiles
+#
+##############################################################################################################################################
+setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
+load("/Results/metagenome/escc/dat_mediate_analysis.RData")
+
+#data pre
+gdata::keep(dat_phe,dat_spe_bac,dat_beta_pheno,tax_fungi,tax_archaea,tax_virus,tax_bac,med_bac_rev,
+            med_fungi_rev,med_archaea_rev,med_virus_rev,med_pathway_rev,med_bac,med_archaea,med_virus, med_fungi,
+            sure=T)
+
+
+med_bac_rev <- med_bac_rev %>% 
+  mutate(king='Bacteria',ACEM_p_rev=ACEM_p,
+         Prop_Med_estimate_rev=Prop_Med_estimate,
+         ACEM_estimate_rev=ACEM_estimate,
+         ACEM_ci_L_rev=ACEM_ci_L,
+         ACEM_ci_H_rev=ACEM_ci_H); dim(med_bac_rev)
+med_fungi_rev <- med_fungi_rev %>%  
+  mutate(king='Fungi',
+         ACEM_p_rev=ACEM_p,
+         Prop_Med_estimate_rev=Prop_Med_estimate,
+         ACEM_estimate_rev=ACEM_estimate,
+         ACEM_ci_L_rev=ACEM_ci_L,
+         ACEM_ci_H_rev=ACEM_ci_H); dim(med_fungi_rev)
+med_archaea_rev <- med_archaea_rev %>% 
+  mutate(king='Archaea',
+         ACEM_p_rev=ACEM_p,
+         Prop_Med_estimate_rev=Prop_Med_estimate,
+         ACEM_estimate_rev=ACEM_estimate,
+         ACEM_ci_L_rev=ACEM_ci_L,
+         ACEM_ci_H_rev=ACEM_ci_H); dim(med_archaea_rev)
+med_virus_rev <- med_virus_rev %>% 
+  mutate(king='Virus',
+         ACEM_p_rev=ACEM_p,
+         Prop_Med_estimate_rev=Prop_Med_estimate,
+         ACEM_estimate_rev=ACEM_estimate,
+         ACEM_ci_L_rev=ACEM_ci_L,
+         ACEM_ci_H_rev=ACEM_ci_H); dim(med_virus_rev)
+med_pathway_rev <- med_pathway_rev %>% 
+  mutate(king='Virus',
+         ACEM_p_rev=ACEM_p,
+         Prop_Med_estimate_rev=Prop_Med_estimate,
+         ACEM_estimate_rev=ACEM_estimate,
+         ACEM_ci_L_rev=ACEM_ci_L,
+         ACEM_ci_H_rev=ACEM_ci_H); dim(med_pathway_rev)
+
+med_bac <- med_bac %>% left_join(med_bac_rev[,c('Pheno','species','ACEM_estimate_rev','ACEM_p_rev',
+                                                'ACEM_ci_L_rev','ACEM_ci_H_rev','Prop_Med_estimate_rev')],
+                                 by=c('Pheno','species')) %>% 
+  filter(as.numeric(ACEM_p)<0.05 ) %>% 
+  mutate(king='Bacteria') %>%
+  filter(ACEM_p_rev>0.05 ) %>% 
+  left_join(tax_bac,by=c('species'='Species')); dim(med_bac)
+med_fungi <- med_fungi %>%  
+  left_join(med_fungi_rev[,c('Pheno','species','ACEM_estimate_rev','ACEM_p_rev',
+                             'ACEM_ci_L_rev','ACEM_ci_H_rev','Prop_Med_estimate_rev')],
+            by=c('Pheno','species')) %>% 
+  filter(as.numeric(ACEM_p)<0.05 ) %>% 
+  mutate(king='Fungi') %>%
+  filter(ACEM_p_rev>0.05 ) %>% 
+  left_join(tax_fungi,by=c('species'='Species')); dim(med_fungi)
+med_archaea <- med_archaea %>% 
+  left_join(med_archaea_rev[,c('Pheno','species','ACEM_estimate_rev','ACEM_p_rev',
+                               'ACEM_ci_L_rev','ACEM_ci_H_rev','Prop_Med_estimate_rev')],
+            by=c('Pheno','species')) %>% 
+  filter(as.numeric(ACEM_p)<0.05 ) %>% 
+  mutate(king='Archaea') %>%
+  filter(ACEM_p_rev>0.05 ) %>% 
+  left_join(tax_archaea,by=c('species'='Species')); dim(med_archaea)
+med_virus <- med_virus %>% 
+  left_join(med_virus_rev[,c('Pheno','species','ACEM_estimate_rev','ACEM_p_rev',
+                             'ACEM_ci_L_rev','ACEM_ci_H_rev','Prop_Med_estimate_rev')],
+            by=c('Pheno','species')) %>% 
+  filter(as.numeric(ACEM_p)<0.05 ) %>% 
+  mutate(king='Virus') %>%
+  filter(ACEM_p_rev>0.05 ) %>% 
+  left_join(tax_virus,by=c('species'='Species')); dim(med_virus)
+med_pathway <- med_pathway %>% 
+  left_join(med_pathway_rev[,c('Pheno','species','ACEM_estimate_rev','ACEM_p_rev',
+                               'ACEM_ci_L_rev','ACEM_ci_H_rev','Prop_Med_estimate_rev')],
+            by=c('Pheno','species')) %>%
+  left_join(pwy_spe[,c('pwy_id','pwy_name','Pathway_id')] %>% unique(),
+            by=c('species'='Pathway_id')) %>% 
+  filter(species %in% colnames(pwy_qc)) %>% 
+  filter(ACEM_p_rev>0.05 ) %>%
+  filter(as.numeric(ACEM_p)<0.05 ) %>% mutate(king='Pathway') %>% 
+  mutate(Genus='Pathway'); dim(med_pathway)
+
+network_spe <- bind_rows(med_bac,med_archaea,med_virus,med_fungi,med_pathway); dim(network_spe) 
+network_spe <- oral_rename(network_spe) %>% 
+  mutate(Prop_Med_estimate=as.numeric(Prop_Med_estimate),
+         Species=species,
+         ACEM_p = as.numeric(ACEM_p)) %>% 
+  arrange(Pheno,Genus,desc(Prop_Med_estimate)) %>% 
+  mutate(Species =factor(Species,levels=unique(Species))) 
+#look into
+network_spe[,c('Pheno','Species','Genus','Prop_Med_estimate',"Prop_Med_p",'ACEM_p','ACEM_q')] %>% 
+  filter(Pheno=='Oral health score')
+network_spe <- data.frame(network_spe); dim(network_spe) 
+table(network_spe$Pheno); table(network_spe$king)
+head(network_spe %>% arrange(desc(Prop_Med_estimate)))
+network_spe[network_spe$king=='Pathway',] %>% arrange(Prop_Med_estimate)
+table(network_spe[network_spe$king=='Pathway',]$Pheno)
+data.frame(table(network_spe[network_spe$king=='Pathway',]$pwy_name)) %>% arrange(Freq)
+
+#circos color define----------
+
+med_sum=network_spe %>% group_by(Species) %>% 
+  summarise(mediation=sum(abs(Prop_Med_estimate))) %>%
+  arrange(desc(mediation)) %>% as.data.frame() %>% 
+  left_join(network_spe[,c('Species','Genus')] %>% unique()) %>% 
+  mutate(Genus=factor(Genus,levels=unique(Genus)))
+genus_lvl=unique(c(grep('^g_',levels(med_sum$Genus),value=T),
+                   grep('^g_',levels(med_sum$Genus),value=T,invert = T)))
+med_sum=med_sum %>% 
+  mutate(Genus=factor(Genus,levels=genus_lvl)) %>% arrange(Genus);med_sum
+
+network_spe_lvl <- network_spe %>% 
+ mutate(Genus=factor(Genus,levels=levels(med_sum$Genus)),
+         king=factor(king,levels=c(kings,'Pathway'))) %>% 
+  mutate(Species=factor(Species,levels=unique(Species))) %>% 
+  arrange(Genus,Species,desc(Prop_Med_estimate),Pheno)
+
+network_spe_lvl[,c('king','Pheno','Species','Genus','Prop_Med_estimate')] %>% 
+  arrange(desc(Prop_Med_estimate))
+summary(network_spe$Prop_Med_estimate)
+network_spe_lvl <- network_spe_lvl %>% left_join(genus_color,by='Genus')
+pheno_color=c('#5356FF','#FF8633','#3ac569','#FCE22A','#D81159');
+names(pheno_color)=levels(network_spe_lvl$Pheno)
+pheno_color= pheno_color[levels(network_spe_lvl$Pheno)]
+
+df_cr=network_spe[,c('king','Genus','Species','Pheno','Prop_Med_estimate')] %>% 
+  as.data.frame() %>% mutate(Species_nm=gsub('_',' ',gsub('^s_','',Species )))
+df_cr[,c('Genus','Species','Pheno')] <- map(df_cr[,c('Genus','Species','Pheno')],
+                                            as.character)
+
+label=bind_rows(data.frame(pheno=levels(network_spe_lvl$Pheno),
+                           color=pheno_color),network_spe_lvl[,c('Species','color')] %>% 
+                  unique() %>% 
+                  arrange(desc(Species))%>% setnames(c('pheno','color'))  ) %>% 
+  mutate(pheno=factor(pheno,levels=pheno))
+label_nm=label$pheno
+group_tem=data.frame(Species=label_nm) %>% 
+  left_join(df_cr[,c('Species','king')] %>% unique()) %>% 
+  mutate(king=ifelse(is.na(king),'Oral health',king)) %>% 
+  mutate(king=factor(king,levels=unique(king)))
+group_nm=group_tem$king; names(group_nm)=label_nm
+
+label_border=label %>% mutate(color=alpha(color,alpha=1))
+label_color=label$color;names(label_color)=label_nm
+label_border_color=label_border$color;names(label_border_color)=label_nm
+
+#combine_df
+df_cr_label=data.frame(label_color) %>% 
+  rownames_to_column(var='Species_nm') %>% 
+  left_join(df_cr) %>% 
+  mutate(Species_nm=factor(Species_nm,
+                           levels=rev(label_nm))) %>% arrange(Species_nm) %>% 
+  mutate(Genus=factor(Genus,levels=unique(Genus)))
+
+
+pdf(paste0(nuts_wd,'/kingdoms/ESCC/Mediate/TX_ESCC_oral_mediate_Circos.pdf',sep=''),
+    width=9,height=9)
+
+circos.clear(); circos.par(cell.padding = c(0,0,0,0),
+                           "track.height" = 0.5,
+                           "start.degree" = 65)
+cdm_res = chordDiagram(df_cr[,c("Species_nm","Pheno","Prop_Med_estimate")], 
+                       order=label_nm, group=group_nm,
+                       grid.col=label_color,
+                       annotationTrack = c('grid'), 
+                       preAllocateTracks = list(track.height = max(strwidth(unlist(dimnames(df_cr))))),
+                       link.decreasing = T,
+                       big.gap = 10, small.gap = 5,
+                       transparency = 0.5,
+                       directional =1,
+                       target.prop.height = mm_h(2),
+                       direction.type = c("diffHeight","arrows"), diffHeight = mm_h(2))
+
+circos.track(track.index = 1, 
+             panel.fun = function(x, y) {
+               color=get_text_color(CELL_META$sector.index)
+               circos.text(CELL_META$xcenter, CELL_META$ylim[1],
+                           CELL_META$sector.index, 
+                           facing = "clockwise", niceFacing = TRUE, 
+                           adj = c(0.5, 0.5),cex=1.5,col=color)
+             }) 
+dev.off()
+
