@@ -1,0 +1,199 @@
+
+#Orl_score*PCo2----------
+var='orl_score'; var1='orl_score'; i='Bacteria'
+#data
+dat_pcoa0 <- read.xlsx(paste0(nuts_wd,'/',i,'/abundance/dat_pcoa.xlsx'))
+head(dat_pcoa0)
+dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) %>% 
+  inner_join(dat_phe,by='sample_id') %>% 
+  mutate(cc_chr=factor(ifelse(cc==0,'Control','ESCC'),
+                       levels=c('Control','ESCC')))
+explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);
+explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
+modl <- glm(cc~orl_score*X2+age+Sex+BMIG+Family_EC+Smoking+Alcohol_drinking+Tea+Education+Marriage,
+            binomial(link='logit'),dat_pcoa); 
+(res=summary(modl)); 
+p_inter=p_3dg_anno(res[grep(':',rownames(data.frame(res$coefficients))),ncol(res)])
+modl <- glm(cc~orl_score*X1+age+Sex+BMIG+Family_history_EC+Smoking+Alcohol_drinking+Tea+Education+Marriage,
+            binomial(link='logit'),dat_pcoa); 
+summary(modl)
+color_lvl=c("#5A8CEC","#E16A8B") 
+p1=ggplot(dat_pcoa,aes(x=X2,y=orl_score))+
+  geom_point(aes(color='cc_chr'),
+              size=3,alpha=0.85)+
+  stat_smooth(aes(fill=cc_chr),
+              method = 'lm',linewidth=1.5,alpha=0.3)+
+  scale_color_manual(values=color_lvl,name='')+
+  scale_fill_manual(values=color_lvl,name='')+
+  labs(y='Oral health score',x='PCo2')+
+  theme_classic()+
+  theme(plot.title = element_text(size=20),
+        plot.subtitle = element_text(size=20),
+        legend.position='none',
+        legend.text=element_text(size=20),
+        legend.title=element_text(size=20),
+        axis.title=element_text(size=20),
+        axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20,angle=90));p1
+
+##right ----------
+var='orl_score';var1='orl_score'
+#data
+dat_pcoa0 <- read.xlsx(paste0(nuts_wd,'/',i,'/abundance/dat_pcoa.xlsx'))
+head(dat_pcoa0)
+dat_pcoa <- dat_pcoa0 %>% select(all_of(c('sample_id','X1','X2'))) %>% 
+  inner_join(dat_phe,by='sample_id') %>% 
+  mutate(cc_chr=factor(ifelse(cc==0,'Control','ESCC'),
+                       levels=c('Control','ESCC')))
+explainedvar1 <- unique(dat_pcoa0$explainedvar1_af);
+explainedvar2 <- unique(dat_pcoa0$explainedvar2_af)
+
+md=median(dat_pcoa$X2,na.rm=T)
+data=dat_pcoa %>% mutate(pcoa2=ifelse(X2>md,'High','Low')) 
+color_lvl=c("#5A8CEC","#E16A8B")  
+p2=ggplot(data %>% filter(pcoa2=='Low'), 
+          aes(x = cc_chr,y = orl_score,fill=cc_chr)) +
+  geom_boxplot(width = 0.5, alpha = 0.85,size=0.5,
+               color='gray30')+
+  scale_fill_manual(values=color_lvl,name='ESCC')+
+  facet_grid(~pcoa2)+
+  labs(x='orl_score',y='')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),
+        strip.text = element_text(size=20),
+        strip.background = element_rect(fill="#55CCF133"),
+        axis.title=element_blank(),
+        axis.text.x = element_text(size=20,angle=45),
+        axis.text.y = element_blank(),
+        legend.position='none');p2
+p3=ggplot(data %>% filter(pcoa2=='High'), 
+          aes(x = cc_chr,y = orl_score,fill=cc_chr)) +
+  geom_boxplot(width = 0.5, alpha = 0.85,size=0.4,
+               color='gray30')+
+  scale_fill_manual(values=color_lvl,name='ESCC')+
+  facet_grid(~pcoa2)+
+  labs(x='orl_score',y='')+
+  theme_bw()+
+  theme(panel.grid = element_blank(),
+        axis.ticks.y = element_blank(),
+        strip.text = element_text(size=20),
+        strip.background = element_rect(fill="#F7D4DF99"),
+        axis.title=element_blank(),
+        axis.text.x = element_text(size=20,angle=45),
+        axis.text.y = element_blank(),
+        legend.position='none');p3
+pdf(paste0(sv_wd,'/Bacteria/Str_orl/PCo2_stratify_orl_score.pdf'),height=5,width=10)
+egg::ggarrange(p1,p2,p3,ncol=3,widths=c(2,0.5,0.5))
+dev.off()
+
+#inter pco2 --
+# plot stratified res----------
+color_str1 <- c('#F28E2B','#638B66')
+
+dat_plt[,c('OR','CI_L','CI_H')] <- map(dat_plt[,c('OR','CI_L','CI_H')],as.numeric); summary(dat_plt[,c('OR','CI_L','CI_H')])
+data1=dat_plt %>% filter(diversity %in% 'PCo1' & Pheno %in% c('Oral health score'))
+p_inter1 <- p_3dg_anno(data1$p %>% unique())
+erbar1 <- ggplot(data1,aes(x=group,y=OR))+
+  geom_bar(aes(fill=group,color=group),stat = "identity",
+           width=0.5,alpha=0.85)+
+  geom_errorbar(aes(ymin=CI_L,ymax = CI_H),
+                position = position_dodge(0.5),width=0.1)+
+  geom_hline(yintercept=1.0,linetype="dashed",color="gray50")+
+  labs(title='Stratified by PCo1',x="Oral health score",y='OR (95% CI)',fill='')+#scale_color_manual(values=color_str_pwy)+
+  scale_fill_manual(values=color_str1)+
+  scale_color_manual(values=color_str1)+
+  scale_y_continuous(expand=c(0,0))+
+  theme_classic()+
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size=20),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=20),
+        legend.position="none"); erbar1
+
+#PCO2----------
+data2=dat_plt %>% filter(diversity %in% 'PCo2' & Pheno %in% c('Oral health score'))
+p_inter2 <- p_3dg_anno(data2$p %>% unique())
+erbar2 <- ggplot(data2,aes(x=group,y=OR))+
+  geom_bar(aes(fill=group,color=group),stat = "identity",
+           width=0.5,alpha=0.85)+
+  geom_errorbar(aes(ymin=CI_L,ymax = CI_H),
+                position = position_dodge(0.5),width=0.1)+
+  geom_hline(yintercept=1.0,linetype="dashed",color="gray50")+
+  labs(title='Stratified by PCo2',x="Oral health score",y='OR (95% CI)',fill='')+#scale_color_manual(values=color_str_pwy)+
+  scale_fill_manual(values=color_str1)+
+  scale_color_manual(values=color_str1)+
+  theme_classic()+
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size=20),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=20),
+        legend.position="none"); erbar2
+
+pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_plot/PCoA_stratify_horizontal.pdf'),
+    height=5,width=10)
+egg::ggarrange(erbar1,erbar2,ncol=2,widths=c(1,1))
+dev.off()
+
+
+lg <- ggplot(data2,aes(x=Pheno,y=OR, group=group))+
+  geom_bar(aes(fill=group,color=group),stat = "identity",
+           width=0.5,alpha=0.85)+
+  geom_errorbar(aes(ymin=CI_L,ymax = CI_H),
+                position = position_dodge(0.5),width=0.1)+
+  scale_fill_manual(values=color_str1)+
+  scale_color_manual(values=color_str1)+
+  theme_void()+ 
+  theme(legend.position="right", 
+        legend.title=element_blank(),
+        legend.text = element_text(size=20)); lg
+pdf(paste0(sv_wd,"/Bacteria/abundance/PCoA_plot/PCoA_stratify_legend.pdf"),width=1.3,height=0.8)#,width=1100,height=700,res=130)
+grid.draw(ggpubr::get_legend(lg))
+dev.off()
+
+
+#Supple   other indicators of oral health----------
+data1=dat_plt %>% filter(diversity %in% 'PCo1' & !Pheno %in% c('Oral health score')) %>% 
+  mutate(Pheno=factor(Pheno,levels=pheno_lvl))
+p_inter1 <- p_3dg_anno(data1$p %>% unique())
+p_inter1 <- p_3dg_anno(data1$p %>% unique())
+erbar1 <- ggplot(data1,aes(x=group,y=OR))+
+  geom_bar(aes(fill=group,color=group),stat = "identity",
+           width=0.5,alpha=0.85)+
+  geom_errorbar(aes(ymin=CI_L,ymax = CI_H),
+                position = position_dodge(0.5),width=0.1)+
+  geom_hline(yintercept=1.0,linetype="dashed",color="gray50")+
+  labs(title='Stratified by PCo1',x="Oral health score",y='OR (95% CI)',fill='')+#scale_color_manual(values=color_str_pwy)+
+  scale_fill_manual(values=color_str1)+
+  scale_color_manual(values=color_str1)+
+  scale_y_continuous(expand=c(0,0))+
+  theme_classic()+
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size=20),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=20),
+        legend.position="none"); erbar1
+#PCO2----------
+data2=dat_plt %>% filter(diversity %in% 'PCo2' & !Pheno %in% c('Oral health score')) %>% 
+  mutate(Pheno=factor(Pheno,levels=pheno_lvl))
+p_inter2 <- p_3dg_anno(data2$p %>% unique())
+erbar2 <- ggplot(data2,aes(x=group,y=OR))+
+  geom_bar(aes(fill=group,color=group),stat = "identity",
+           width=0.5,alpha=0.85)+
+  geom_errorbar(aes(ymin=CI_L,ymax = CI_H),
+                position = position_dodge(0.5),width=0.1)+
+  geom_hline(yintercept=1.0,linetype="dashed",color="gray50")+
+  labs(title='Stratified by PCo2',x="Oral health score",y='OR (95% CI)',fill='')+#scale_color_manual(values=color_str_pwy)+
+  scale_fill_manual(values=color_str1)+
+  scale_color_manual(values=color_str1)+
+  theme_classic()+
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(size=20),
+        axis.title = element_text(size=20),
+        axis.text = element_text(size=20),
+        legend.position="none"); erbar2
+
+
+pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_plot/PCoA_stratify_otherIndicator_horizontal.pdf'),
+    height=10,width=10)
+egg::ggarrange(erbar1,erbar2,nrow=2,heights=c(1,1))
+dev.off()
