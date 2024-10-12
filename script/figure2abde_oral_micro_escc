@@ -10,7 +10,69 @@ setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
 load("/Results/metagenome/escc/dat_analysis.RData")
 
 #data pre
-gdata::keep(dat_phe,dat_alpha2,phe_PCo_lvl,sure=T)
+gdata::keep(dat_phe,dat_alpha2,dat_spe_bac,dat_beta_pheno,base_maphe_PCo_lvl,sure=T)
+
+dat_spe=dat_spe_bac; mas_wd="/Metagenome/Oral_health/Bacteria"
+
+fit_data_taxa_cc <- Maaslin2(
+  input_data = dat_spe,
+  input_metadata = dat_beta_pheno,
+  output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_taxa_output_cc"),
+  col_name=c(i,'cc_chr',base_maaslin_cc)
+  transform = "AST",
+  fixed_effects=col_name,
+  plot_heatmap=F,plot_scatter=F,
+  reference=c('Sex,Men',"Marriage,Unmarried",
+              'Education,Illiteracy','Family_history_EC,No',
+              'Smoking,Never','Tea_drinking,Never',
+              'Alcohol_drinking,Never','Wealth_score,Q1'),
+max_significance = 0.1 
+)
+
+#extract sig species
+# case/ctrl
+res_mas_cc <- fread(paste0(paste0(mas_wd,"/Maaslin_CC_j/Maaslin_taxa_output_cc"),"/all_results.tsv"));head(res_mas_cc)
+res_mas_cc <- 
+  filter(res_mas_cc,metadata=="cc") %>% 
+  select(c("feature",'metadata',"coef","stderr","pval","qval")) %>% 
+  setnames(c("Feature",'Pheno',"Beta","SD","pval","qval")) %>% 
+  mutate(T_value=Beta/SD,)
+#q_val
+res_mas_cc_sig <- filter(res_mas_cc,qval<0.1); dim(res_mas_cc_sig) #fdr<0.05:4个
+
+#—【1.1】Spe-ESCC-Oral health--
+#oral
+oral_mas <- c('Teeth_lost','mft_2g','denture_2g','Brush_times','orl_score')
+for (i in c(oral_mas)){
+  col_name=c(i,'cc_chr',base_maaslin_orl)
+  
+  data_phe <- dat_beta_pheno %>% select(all_of(col_name));print(colnames(data_phe))
+  fit_data_taxa_oral <- Maaslin2(
+    input_data = dat_spe,
+    input_metadata = data_phe,
+    output = paste0(mas_wd,"/Maaslin_Oral_j/Maaslin_taxa_output_",i,sep=''),
+    transform = "AST",
+    plot_scatter = F,plot_heatmap = F,
+    fixed_effects=col_name,
+    reference=c('Sex,Men','Family_history_EC,No',
+                'Smoking,Never','Tea_drinking,Never', 
+                'Alcohol_drinking,Never','Wealth_score,Q1'),
+    max_significance = 0.1 
+  )
+}
+
+#extract sig spes with oral
+res_mas_orl <- c(); 
+for (i in c(oral_mas)){
+  res_mas <- fread(paste0(paste0(mas_wd,"/Maaslin_",path_nm,"_j/Maaslin_taxa_output_",i,sep=''),"/all_results.tsv"))
+  res_mas <- filter(res_mas,metadata==i) %>% 
+    select(c("feature","metadata","coef","stderr","pval","qval")) %>% 
+    setnames(c("Feature","Pheno","Beta","SD","pval","qval")) %>% 
+    mutate(Pheno=i,T_value=Beta/SD)
+  print(i);print(summary(res_mas$'qval'));
+  res_mas_orl <- rbind(res_mas_orl,res_mas)
+}
+res_mas_orl_sig <- res_mas_orl[res_mas_orl$qval<0.1,]
 
 
 
