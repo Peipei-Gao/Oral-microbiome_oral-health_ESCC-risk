@@ -4,6 +4,13 @@
 #
 ##############################################################################################################################################
 
+setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
+load("/Results/metagenome/oral_health/dat_analysis.RData")
+
+#data pre
+gdata::keep(df_phy,dat_alpha2,phe_PCo_lvl,sure=T)
+
+
 # 1) Logit res of the association between oral health and escc risk
 form0_mini <- 'age+Sex'
 form0 <- 'age+Sex+Marriage+Education+Family_history_EC+Smoking+Alcohol_drinking+Tea_drinking+BMI_10ago'
