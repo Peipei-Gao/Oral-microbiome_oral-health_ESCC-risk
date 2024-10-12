@@ -1,0 +1,417 @@
+################################################################################################################################################
+#
+# Association between oral microbiome and escc risk, in individual species from archaea, virus and fungi
+#
+##############################################################################################################################################
+
+setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
+load("/Results/metagenome/escc/dat_king_analysis.RData")
+
+#data pre, after species data filtering
+gdata::keep(dat_spe,dat_beta_pheno,dat_spe_archaea,dat_spe_virus,dat_spe_fungi,
+  res_archaea_cc,res_archaea_orl,res_virus_cc,res_virus_orl,res_fungi_cc,res_fungi_orl,phe_PCo_lvl,sure=T)
+
+#***Kingdoms****
+##-2] **Archaea--
+#— Maaslin2--
+dat_spe=dat_spe_archaea; mas_wd="/Metagenome/Oral_health/Archaea"
+
+fit_data_taxa_cc <- Maaslin2(
+  input_data = dat_spe,
+  input_metadata = dat_beta_pheno,
+  output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
+  transform = "AST",
+  plot_heatmap=F,plot_scatter=F,
+  reference=c('Sex,Men',"Marriage,Unmarried",
+              'Education,Illiteracy',
+              'Family_history_EC,No',
+              'Smoking,Never',
+              'Tea_drinking,Never',
+              'Alcohol_drinking,Never',
+              'Wealth_score,Q1'),
+  max_significance = 0.1 
+)
+
+# case/ctrl--
+res_archaea_cc <- fread(paste0(paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),"/all_results.tsv"));head(res_archaea_cc);table(res_archaea_cc$metadata)
+res_archaea_cc <- 
+  filter(res_archaea_cc,metadata=="cc") %>% 
+  select(c("feature",'metadata',"coef","stderr","pval","qval")) 
+head(res_archaea_cc);dim(res_archaea_cc) 
+#q_val
+res_archaea_cc_sig <- filter(res_archaea_cc,qval<0.1); 
+dim(res_archaea_cc_sig) 
+#—【1】Spe-ESCC-Oral health--
+#oral
+for (i in c(oral_mas)){
+  col_name <- c(i,c('cc',base_maaslin))
+  fit_data_taxa_oral <- Maaslin2(
+    input_data = dat_spe,
+    output = paste0(mas_wd,"/Maaslin_Oral_j/Maaslin_taxa_output_",i,sep=''),
+    transform = "AST",
+    plot_scatter = F,
+    plot_heatmap = F,
+    fixed_effects=col_name,
+    reference=c('Sex,Men','Family_history_EC,No',
+                'Smoking,Never','Tea_drinking,Never', 
+                'Alcohol_drinking,Never','Wealth_score,Q1'),
+    max_significance = 0.1 
+  )
+}
+
+#extract sig spes with oral
+res_archaea_orl <- c(); res_archaea_orl_sig <- c() 
+for (i in c(oral_mas)){
+  res_archaea <- fread(paste0(paste0(mas_wd,"/Maaslin_",path_nm,"_j/Maaslin_taxa_output_",i,sep=''),"/all_results.tsv"))
+  res_archaea <- filter(res_archaea,metadata==i ) %>% 
+    select(c("feature","metadata","coef","stderr","pval","qval")) %>% 
+    setnames(c("Feature","Pheno","Beta","SD","pval","qval")) %>% 
+    mutate(Pheno=i,T_value=Beta/SD)
+  res_archaea_orl <- rbind(res_archaea_orl,res_archaea)
+}
+table(res_archaea_orl[res_archaea_orl$qval<0.1,]$Pheno)
+
+##-3] **Virus--
+#— Maaslin2--
+dat_spe=dat_spe_virus; mas_wd="/Metagenome/Oral_health/Virus"
+fit_data_taxa_cc <- Maaslin2(
+  input_data = dat_spe,
+  input_metadata = dat_beta_pheno,
+  output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
+  transform = "AST",
+  plot_heatmap=F,plot_scatter=F,
+  reference=c('Sex,Men',"Marriage,Unmarried",
+              'Education,Illiteracy','Family_history_EC,No',
+              'Smoking,Never','Tea_drinking,Never',
+              'Alcohol_drinking,Never','Wealth_score,Q1'),
+  max_significance = 0.1 
+)
+
+
+#extract sig species
+# case/ctrl
+res_virus_cc <- fread(paste0(paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),"/all_results.tsv"));head(res_virus_cc);table(res_virus_cc$metadata)
+res_virus_cc <- 
+  filter(res_virus_cc,metadata=="cc") %>% 
+  select(c("feature","metadata","coef","stderr","pval","qval")) %>% 
+  setnames(c("Feature",'Pheno',"Beta","SD","pval","qval")) %>% 
+  mutate(T_value=Beta/SD)
+head(res_virus_cc);dim(res_virus_cc)
+#q_val
+res_virus_cc_sig <- filter(res_virus_cc,qval<0.1); dim(res_virus_cc_sig) #fdr<0.05:4个
+
+#—【2.8.1】Spe-ESCC-Oral health--
+#oral
+for (i in c(oral_mas)){
+  col_name <- c(i,c('cc',base_maaslin))
+  fit_data_taxa_oral <- Maaslin2(
+    input_data = dat_spe,
+    input_metadata = dat_beta_pheno,
+    output = paste0(mas_wd,"/Maaslin_Oral_j/Maaslin_taxa_output_",i,sep=''),
+    transform = "AST",
+    plot_scatter = F,plot_heatmap = F,
+    fixed_effects=col_name,
+    reference=c('Sex,Men','Family_history_EC,No',
+                'Smoking,Never','Tea_drinking,Never', 
+                'Alcohol_drinking,Never','Wealth_score,Q1'),
+    max_significance = 0.1
+  )
+}
+
+
+#extract sig spes with oral
+res_virus_orl <- c(); res_virus_orl_sig <- c()
+for (i in c(oral_mas)){
+  res_virus <- fread(paste0(paste0(mas_wd,"/Maaslin_",path_nm,"_j/Maaslin_taxa_output_",i,sep=''),"/all_results.tsv"))
+  res_virus <- filter(res_virus,metadata==i ) %>% 
+    select(c("feature","metadata","coef","stderr","pval","qval")) %>% 
+    setnames(c("Feature","Pheno","Beta","SD","pval","qval")) %>% 
+    mutate(Pheno=i,T_value=Beta/SD)
+  print(i);print(summary(res_virus_orl$'qval'));
+  res_virus_orl <- rbind(res_virus_orl,res_virus)
+}
+res_virus_orl_sig=res_virus_orl[res_virus_orl$qval<0.1,]
+table(res_virus_orl[res_virus_orl$qval<0.1,]$Pheno);
+
+
+##-4] **Fungi--
+#— Maaslin2--
+
+dat_spe=dat_spe_fungi; mas_wd="/Metagenome/Oral_health/Fungi";
+
+fit_data_taxa_cc <- Maaslin2(
+  input_data = dat_spe,
+  input_metadata = dat_beta_pheno,
+  output = paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),
+  transform = "AST",
+  plot_heatmap=F,plot_scatter=F,
+  reference=c('Sex,Men',"Marriage,Unmarried",
+              'Education,Illiteracy','Family_history_EC,No',
+              'Smoking,Never','Tea_drinking,Never',
+              'Alcohol_drinking,Never',
+              'Wealth_score,Q1'),
+  max_significance = 0.1 
+)
+
+
+#extract sig species
+res_fungi_cc <- fread(paste0(paste0(mas_wd,"/Maaslin_CC_j/Maaslin_spe_cc"),"/all_results.tsv"));head(res_fungi_cc);table(res_fungi_cc$metadata)
+res_fungi_cc <- 
+  filter(res_fungi_cc,metadata=="cc") %>% 
+  select(c("feature","metadata","coef","stderr","pval","qval")) %>% 
+  setnames(c("Feature",'Pheno',"Beta","SD","pval","qval")) %>% 
+  mutate(T_value=Beta/SD)
+head(res_fungi_cc);dim(res_fungi_cc) 
+#q_val
+res_fungi_cc_sig <- filter(res_fungi_cc,qval<0.1); dim(res_fungi_cc_sig)
+
+#—【2.8.1】Spe-ESCC-Oral health--
+#oral
+for (i in c(oral_mas)){
+  col_name <- c(i,c('cc',base_maaslin))
+  fit_data_taxa_oral <- Maaslin2(
+    input_data = dat_spe,
+    input_metadata = dat_beta_pheno,
+    output = paste0(mas_wd,"/Maaslin_Oral_j/Maaslin_taxa_output_",i,sep=''),
+    transform = "AST",
+    plot_scatter = F,plot_heatmap = F,
+    fixed_effects=col_name,
+    reference=c('Sex,Men','Family_history_EC,No',
+                'Smoking,Never','Tea_drinking,Never', 
+                'Alcohol_drinking,Never','Wealth_score,Q1'),
+    max_significance = 0.1 
+  )
+}
+
+
+#extract sig spes with oral
+res_fungi_orl <- c(); res_fungi_orl_sig <- c()
+for (i in c(oral_mas)){
+  res_fungi <- fread(paste0(paste0(mas_wd,"/Maaslin_",path_nm,"_j/Maaslin_taxa_output_",i,sep=''),"/all_results.tsv"))
+  res_fungi <- filter(res_fungi,metadata==i ) %>% 
+    select(c("feature","metadata","value","coef","stderr","pval","qval")) %>% 
+    setnames(c("Feature","Pheno","value","Beta","SD","pval","qval")) %>% 
+    mutate(Pheno=i,T_value=Beta/SD)
+  print(i);print(summary(res_fungi_orl$'qval'));
+  res_fungi_orl <- rbind(res_fungi_orl,res_fungi)
+}
+res_fungi_orl_sig=res_fungi_orl[res_fungi_orl$qval<0.1,]
+table(res_fungi_orl[res_fungi_orl$qval<0.1,]$Pheno); 
+
+#Heatmap-Multikingdoms-----------------------------------
+spe_archaea <- unique(c(res_archaea_cc[res_archaea_cc$qval<0.15,]$Feature,
+  res_archaea_orl[res_archaea_orl$qval<0.15,]$Feature))
+spe_virus <- unique(c(res_virus_cc[res_virus_cc$qval<0.15,]$Feature,
+  res_virus_orl[res_virus_orl$qval<0.15,]$Feature))
+spe_fungi <- unique(c(res_fungi_cc[res_fungi_cc$qval<0.15,]$Feature,
+  res_fungi_orl[res_fungi_orl$qval<0.15,]$Feature))
+tax_bacteria=read.xlsx(paste0(nuts_wd,'/Bacteria/abundance/Taxonomy_phy_species.xlsx'))
+tax_virus=read.xlsx('Virus/tax_virus.xlsx')
+tax_archaea=read.xlsx('archaea/tax_archaea.xlsx')
+tax_fungi=read.xlsx('fungi/tax_fungi.xlsx')
+
+data1=bind_rows(res_archaea_cc %>% mutate(Pheno='ESCC'),
+                rename_pheno(res_archaea_orl,Pheno)) %>% 
+  filter(Feature %in% spe_archaea) %>% 
+  mutate(Pheno=factor(Pheno,levels=c('ESCC',pheno_lvl)))  %>% 
+  left_join(tax_archaea[,c('Phylum','Genus','Species')] %>% unique(),
+            by=c('Feature'='Species')) %>% 
+  mutate(Kingdom='Archaea') %>% 
+  mutate(Feature=factor(Feature,levels=unique(Feature)))
+data2=bind_rows(res_virus_cc %>% mutate(Pheno='ESCC'),
+                rename_pheno(res_virus_orl,Pheno)) %>% 
+  filter(Feature %in% spe_virus) %>% 
+  mutate(Pheno=factor(Pheno,levels=c('ESCC',pheno_lvl)))  %>% 
+  left_join(tax_virus[,c('Phylum','Genus','Species')] %>% unique(),
+            by=c('Feature'='Species')) %>% 
+  mutate(Kingdom='Virus') %>% 
+  arrange(Phylum,Genus) %>% 
+  mutate(Feature=factor(Feature,levels=unique(Feature)))
+data3=bind_rows(res_fungi_cc %>% mutate(Pheno='ESCC'),
+                rename_pheno(res_fungi_orl,Pheno)) %>% 
+  filter(Feature %in% spe_fungi) %>% 
+  mutate(Pheno=factor(Pheno,levels=c('ESCC',pheno_lvl)))  %>% 
+  left_join(tax_fungi[,c('Phylum','Genus','Species')] %>% unique(),
+            by=c('Feature'='Species')) %>% 
+  mutate(Kingdom='Fungi') %>% 
+  mutate(Feature=factor(Feature,levels=unique(Feature)))
+
+##color define
+data=bind_rows(data1,data2,data3)
+color_phy <- c(col,col1_phy)[1:length(phy)]; names(color_phy) <- phy
+kig=unique(data$Kingdom);
+color_kig <- color_kings2[2:4]; names(color_kig) <- kings[2:4]
+ann_colors=list(Phylum=color_phy,Kingdom=color_kig) 
+anno_row <- res_mas_hp[,c('Phylum','Kingdom')];table(anno_row$Kingdom) #'Phylum',
+
+##*Sing kingdom------------------
+#data1
+res_mas_hp1 <- reshape2::dcast(data1,
+                               Feature+Phylum+Genus+Kingdom~Pheno,
+                               value.var='T_value') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp1[is.na(res_mas_hp1$Phylum),]$Feature
+res_mas_q1 <- reshape2::dcast(data1,
+                              Feature~Pheno,value.var='qval') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp1[is.na(res_mas_hp1$Phylum),]$Feature
+
+q_anno1=res_mas_q1
+if (!is.null(q_anno1)){
+  ssmt <-  q_anno1 < 0.05
+  q_anno1[ssmt] <-'**'
+  smt <-  q_anno1 >= 0.05 & q_anno1 <0.15
+  q_anno1[smt] <- '*'
+  q_anno1[!ssmt&!smt]<- ''
+} else {
+  q_anno1 <- F
+};q_anno1
+
+#color
+anno_row1 <- res_mas_hp1[,c('Phylum','Kingdom')];
+data_hmp1 <- res_mas_hp1 %>% select(!c('Phylum','Genus','Kingdom'));
+
+ht <- ComplexHeatmap::pheatmap(as.matrix(data_hmp1),
+                               name='Beta/SD',
+                               cellheight=20,cellwidth=40,angle_col = '315',
+                               show_rownames = T,
+                               show_colnames = T,
+                               cluster_rows=F,
+                               cluster_cols=F,gaps_col = c(1),
+                               col=colorRamp2,
+                               display_numbers = as.matrix(q_anno1),
+                               fontsize=20,fontsize_row=20,fontsize_col=20,
+                               fontsize_number=20,number_color='black',
+                               legend=T,
+                               annotation_row = anno_row1,annotation_colors=ann_colors,
+                               heatmap_legend_param = list(legend_height=unit(2,"cm"),
+                                                           labels_gp = gpar(fontsize = 20),
+                                                           title_gp = gpar(fontsize = 20, fontface = "bold"))#,#legend title字体
+                               #title_position="topcenter")#legend title位置
+); #ht
+
+pdf(paste0(sv_wd,"/kingdoms/Oral_health/Maaslin_escc_oral_spe_king1.pdf"),width=11.5,height=15.5)
+ht
+dev.off()
+
+#king2
+#data2
+res_mas_hp2 <- reshape2::dcast(data2,
+                               Feature+Phylum+Genus+Kingdom~Pheno,
+                               value.var='T_value') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp2[is.na(res_mas_hp2$Phylum),]$Feature
+res_mas_q2 <- reshape2::dcast(data2,
+                              Feature~Pheno,
+                              value.var='qval') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp2[is.na(res_mas_hp2$Phylum),]$Feature
+q_anno2=res_mas_q2
+if (!is.null(q_anno2)){
+  ssmt <-  q_anno2 < 0.05
+  q_anno2[ssmt] <-'**'
+  smt <-  q_anno2 >= 0.05 & q_anno2 <0.15
+  q_anno2[smt] <- '*'
+  # mt <-  q_anno2 >= 0.1 & q_anno2 <0.25
+  # q_anno2[mt] <- '*'
+  q_anno2[!ssmt&!smt]<- ''
+} else {
+  q_anno2 <- F
+};q_anno2
+
+#color
+anno_row2 <- res_mas_hp2[,c('Phylum','Kingdom')];table(anno_row$Kingdom) #'Phylum',
+data_hmp2 <- res_mas_hp2 %>% select(!c('Phylum','Genus','Kingdom'));summary(data_hmp)
+
+ht <- ComplexHeatmap::pheatmap(as.matrix(data_hmp2),
+                               name='Beta/SD',
+                               cellheight=20,cellwidth=40,
+                               angle_col = '315',
+                               show_rownames = T,
+                               show_colnames = T,
+                               cluster_rows=F,
+                               cluster_cols=F,gaps_col = c(1),
+                               colorRamp2,
+                               row_names_side = "left",
+                               column_names_side='bottom',
+                               display_numbers = as.matrix(q_anno2),
+                               fontsize=20,
+                               fontsize_row=20,
+                               fontsize_col=20,
+                               fontsize_number=20,
+                               number_color='black',
+                               fontface_row = 'italic',legend=T,
+                               annotation_row = anno_row2,annotation_colors=ann_colors,
+                               heatmap_legend_param = list(legend_height=unit(2,"cm"),
+                                                           labels_gp = gpar(fontsize = 20),
+                                                           title_gp = gpar(fontsize = 20, fontface = "bold"))#,#legend title字体
+); ht
+
+pdf(paste0(sv_wd,"/kingdoms/Oral_health/Maaslin_escc_oral_spe_king2.pdf"),width=10,height=20)
+ht
+dev.off()
+
+
+#data3
+res_mas_hp3 <- reshape2::dcast(data3,
+                               Feature+Phylum+Genus+Kingdom~Pheno,
+                               value.var='T_value') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp3[is.na(res_mas_hp3$Phylum),]$Feature
+res_mas_q3 <- reshape2::dcast(data3,
+                              Feature~Pheno,
+                              value.var='qval') %>% 
+  column_to_rownames(var='Feature'); 
+res_mas_hp3[is.na(res_mas_hp3$Phylum),]$Feature
+q_anno3=res_mas_q3
+if (!is.null(q_anno3)){
+  ssmt <-  q_anno3 < 0.05
+  q_anno3[ssmt] <-'**'
+  smt <-  q_anno3 >= 0.05 & q_anno3 <0.15
+  q_anno3[smt] <- '*'
+  q_anno3[!ssmt&!smt]<- ''
+} else {
+  q_anno3 <- F
+};q_anno3
+
+#color
+anno_row3 <- res_mas_hp3[,c('Phylum','Kingdom')];table(anno_row$Kingdom) #'Phylum',
+data_hmp3 <- res_mas_hp3 %>% select(!c('Phylum','Genus','Kingdom'));summary(data_hmp)
+
+ht <- ComplexHeatmap::pheatmap(as.matrix(data_hmp3),
+                               name='Beta/SD',
+                               cellheight=20,cellwidth=40,
+                               angle_col = '315',
+                               show_rownames = T,
+                               show_colnames = T,
+                               cluster_rows=F,
+                               cluster_cols=F,
+                               gaps_col = c(1),
+                               colorRamp2,
+                               row_names_side = "left",
+                               column_names_side='bottom',
+                               display_numbers = as.matrix(q_anno3),
+                               fontsize=20,
+                               fontsize_row=20,
+                               fontsize_col=20,
+                               fontsize_number=20,
+                               number_color='black',
+                               fontface_row = 'italic',legend=T,
+                               annotation_row = anno_row3,annotation_colors=ann_colors,
+                               heatmap_legend_param = list(legend_height=unit(2,"cm"),
+                                                           labels_gp = gpar(fontsize = 20),
+                                                           title_gp = gpar(fontsize = 20, fontface = "bold"))#,#legend title字体
+); ht
+
+pdf(paste0(sv_wd,"/kingdoms/Oral_health/Maaslin_escc_oral_spe_king3.pdf"),width=10,height=5)
+ht
+dev.off()
+
+
+
+
+
+
+
+
+
