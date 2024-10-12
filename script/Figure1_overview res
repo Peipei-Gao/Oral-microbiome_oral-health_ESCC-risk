@@ -16,7 +16,8 @@ for (i in c(oral_chr_logit)){
   form <- paste0(form0,'+',i); m <- as.formula(paste('cc ',form,sep='~ '));
   model <- glm(m,binomial(link='logit'),data=df);
   res_ful <- summary(model); res_ful <- data.frame(res_ful$coefficients)
-  OR_fully <- res_ful[21:nrow(res_ful),] %>% setnames(c('Beta','SE','Z','P_fully')) %>% 
+  OR_fully <- res_ful[21:nrow(res_ful),] %>% 
+    setnames(c('Beta','SE','Z','P_fully')) %>% 
     mutate(OR=round(exp(Beta),2),
           CI_L=round(exp(Beta-1.96*SE),2),
            CI_H=round(exp(Beta+1.96*SE),2)) %>% 
@@ -26,9 +27,12 @@ for (i in c(oral_chr_logit)){
   form_mini <- paste(form0_mini,'+',i); m_mini <- as.formula(paste('cc ',form_mini,sep='~ '));
   model_mini <- glm(m_mini,binomial(link='logit'),data=df);
   res_mini <- summary(model_mini); res_mini <- data.frame(res_mini$coefficients)
-  OR_minimally <- res_mini[4:nrow(res_mini),]%>% setnames(c('Beta','SE','Z','P_mini')) %>% 
-    mutate(OR_mini=format(round(exp(Beta),2),nsmall=2),CI_L_mini=format(round(exp(Beta-1.96*SE),2),nsmall=2),
-           CI_H_mini=format(round(exp(Beta+1.96*SE),2),nsmall=2)) %>% mutate(OR_CI_mini=paste0(OR_mini,' (',CI_L_mini,'-',CI_H_mini,')'))
+  OR_minimally <- res_mini[4:nrow(res_mini),]%>% 
+    setnames(c('Beta','SE','Z','P_mini')) %>% 
+    mutate(OR_mini=format(round(exp(Beta),2),nsmall=2),
+    CI_L_mini=format(round(exp(Beta-1.96*SE),2),nsmall=2),
+           CI_H_mini=format(round(exp(Beta+1.96*SE),2),nsmall=2)) %>% 
+    mutate(OR_CI_mini=paste0(OR_mini,' (',CI_L_mini,'-',CI_H_mini,')'))
 
   res <- data.frame(cbind(OR_minimally[,c("OR_CI_mini",'P_mini')],
                           OR_fully[,c("OR","CI_L","CI_H","OR_CI",'P_fully')])) 
@@ -115,7 +119,7 @@ for (i in kings[1:4]){
   plots[[i]] <- explain_var
 }
 
-pdf(paste0(sv_wd,'kingdoms/abundance/PCoA_explained_variation_CTR.pdf'),width=16,height=4,onefile = F)#,width = 1200,height = 900,res = 300)
+pdf(paste0(sv_wd,'kingdoms/abundance/PCoA_explained_variation_CTR.pdf'),width=16,height=4)
 egg::ggarrange(plots,ncol = 4,widths=c(1,1,1,1))
 dev.off()
 
