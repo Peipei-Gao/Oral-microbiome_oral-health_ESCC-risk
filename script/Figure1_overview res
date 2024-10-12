@@ -1,1 +1,57 @@
 
+# 1) Logit res of the association between oral health and escc risk
+form0_mini <- 'age+Sex'
+form0 <- 'age+Sex+Marriage+Education+Family_history_EC+Smoking+Alcohol_drinking+Tea_drinking+BMI_10ago'
+oral_chr_logit <- c("Teeth_lost","Lost_1st_age_n","Total_lost_n",'Filled_teeth_n','MFT_g',"Denture","Brush_times","Freq_uncom","Avoid",'orl_score')
+
+OR_output <- data.frame(matrix(nrow=0,ncol=8))
+for (i in c(oral_chr_logit)){
+  print(i)
+  #fully adjusted
+  form <- paste0(form0,'+',i); m <- as.formula(paste('cc ',form,sep='~ '));
+  model <- glm(m,binomial(link='logit'),data=df);
+  res_ful <- summary(model); res_ful <- data.frame(res_ful$coefficients)
+  OR_fully <- res_ful[21:nrow(res_ful),] %>% setnames(c('Beta','SE','Z','P_fully')) %>% 
+    mutate(OR=format(round(exp(Beta),2),nsmall=2),CI_L=format(round(exp(Beta-1.96*SE),2),nsmall=2),
+           CI_H=format(round(exp(Beta+1.96*SE),2),nsmall=2)) %>% mutate(OR_CI=paste0(OR,' (',CI_L,'-',CI_H,')'))
+  tem <- data.frame(table1(as.formula(paste('~',form0,'|cc')),df,overall=F));
+
+  form_mini <- paste(form0_mini,'+',i); m_mini <- as.formula(paste('cc ',form_mini,sep='~ '));
+  model_mini <- glm(m_mini,binomial(link='logit'),data=df);
+  res_mini <- summary(model_mini); res_mini <- data.frame(res_mini$coefficients)
+  OR_minimally <- res_mini[4:nrow(res_mini),]%>% setnames(c('Beta','SE','Z','P_mini')) %>% 
+    mutate(OR_mini=format(round(exp(Beta),2),nsmall=2),CI_L_mini=format(round(exp(Beta-1.96*SE),2),nsmall=2),
+           CI_H_mini=format(round(exp(Beta+1.96*SE),2),nsmall=2)) %>% mutate(OR_CI_mini=paste0(OR_mini,' (',CI_L_mini,'-',CI_H_mini,')'))
+
+  res <- data.frame(cbind(OR_minimally[,c("OR_CI_mini",'P_mini')],
+                          OR_fully[,c("OR","CI_L","CI_H","OR_CI",'P_fully')])) 
+  var_name <-rep(NA,ncol(res)); ref <- rep('1.00',ncol(res))
+  OR_res <- rbind(var_name,ref,res)
+
+  tb <- data.frame(table1(as.formula(paste('~',i,'|cc')),df,overall=F,render.missing=NULL))
+
+  tb_OR <- cbind(tb[2:dim(tb)[1],],OR_res) %>% mutate(var2=i)
+  OR_output <- rbind(OR_output, tb_OR)
+  OR_output <- OR_output %>% mutate(P_mini=ifelse(P_mini=='1.00',NA,P_mini),
+                                    P_fully=ifelse(P_mini=='1.00',NA,P_fully) )
+}
+OR_output
+data= load(OR_output)
+p_orl <- ggplot(data=data,aes(y=Pheno,x=OR))+
+  geom_vline(xintercept=1,linetype="dashed",color="gray40")+ 
+  geom_point(position = position_dodge(0.5),size=5,fill='#EF8018',color='#EF8018')+
+  geom_errorbar(aes(xmin=CI_L,xmax = CI_H),color='#EF8018',
+                position = position_dodge(0.5),width=0,linewidth=0.8,alpha=1)+
+  labs(title='Oral health and ESCC risk',x="OR (95% CI)")+
+  theme_classic()+
+  theme(panel.grid.major=element_line(linewidth=0.5),
+    axis.title=element_text(size=20),
+    axis.text = element_text(size=20),
+    legend.position='bottom',
+    legend.text= element_text(size=20),legend.title=element_text(size=20))
+pdf(paste0(nuts_wd,'/batchALL/Overview/ESCC_Oral_logit.pdf'),width=5,height=4)
+p_orl 
+dev.off()
+
+
+
