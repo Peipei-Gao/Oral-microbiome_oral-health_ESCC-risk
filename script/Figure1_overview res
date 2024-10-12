@@ -140,6 +140,67 @@ grid.draw(ggpubr::get_legend(explain_var_lg))
 dev.off()
 
 
+#pcoa plot
+path <- paste0(sv_wd,'/abundance/PCoA_plot/PCoA_expalined_variance_CTR.xlsx')
+perm_p <- read.xlsx(path)
+
+p1 <- ggplot(dat_pcoa[!is.na(dat_pcoa[,var]),],aes(x=X1,y=X2))+
+  geom_point(aes_string(color=var),size=2.5,alpha=1,stroke=0.3)+#scale_color_manual(name='',values=lvl2_color)+
+  scale_color_gradient(name=var,low =orl_score_3color[1], high = orl_score_3fill[3])+
+  labs(title=bquote(paste(R^2~'=',.(R2),','~italic(q)~'=',.(q))),
+       x=paste0("PCo1 (", explainedvar1, ")"),
+       y=paste0("PCo2 (", explainedvar2, ")"),color='Group')+
+  theme_classic()+
+  theme(plot.title = element_text(size=16,hjust=0),
+        legend.position = 'none',
+        axis.title=element_text(size=20),
+        axis.text = element_text(size=20)); p1
+
+kruskal.test(X2~orl_score_3g,dat_pcoa)
+#box plot
+p1_r <- ggplot(dat_pcoa[!is.na(dat_pcoa$orl_score),])+
+  geom_boxplot(aes(x=as.character(orl_score_3g),y=X2,
+                   fill=as.character(orl_score_3g)),
+               alpha=0.85,size=0.4,color="grey50",outlier.color="grey50")+
+  scale_x_discrete(labels=c('T1','T2','T3'),expand=c(0,0))+
+  theme_classic()+
+  labs(fill='',x='',y='')+
+  theme(axis.ticks = element_blank(), 
+        axis.title = element_blank(),
+        axis.text = element_blank(), 
+        legend.position = 'none'); p1_r
+
+p1_t <- ggplot(dat_pcoa[!is.na(dat_pcoa$orl_score),])+
+  geom_boxplot(aes(x=X1,y=as.character(orl_score_3g),
+                   fill=as.character(orl_score_3g)),
+               alpha=0.85,size=0.4,color="grey50",outlier.color="grey50")+
+  scale_fill_manual(values=orl_score_3fill)+
+  scale_y_discrete(labels=c('T1','T2','T3'),expand=c(0,0))+
+  theme_classic()+
+  theme(axis.ticks = element_blank(), 
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        legend.position = 'none'); p1_t
+
+pdf(paste0(sv_wd,i,'/abundance/Figure1_PCoA_',var,'_CTR.pdf'),width=5,height=5) 
+egg::ggarrange(p1_t,blank, p1,p1_r,nrow = 2,widths = c(5,1),heights=c(1,5))
+dev.off()
+#legend--
+p1_t_leg <- ggplot(dat_pcoa[!is.na(dat_pcoa$orl_score),])+
+  geom_boxplot(aes(x=X1,y=as.character(orl_score_3g),
+                   fill=as.character(orl_score_3g)),
+               alpha=0.85,size=0.4,color="grey50",outlier.color="grey50")+
+  scale_y_discrete(labels=c('T1','T2','T3'),expand=c(0,0))+
+  theme_classic()+
+  theme(axis.ticks = element_blank(), 
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        legend.position = 'right',
+        legend.title=element_blank(),
+        legend.text=element_text(size=15)); p1_t_leg
+pdf(paste0(sv_wd,i,'/abundance/Figure1_PCoA_',var,'_CTR_legend.pdf'),width=0.8,height=1) 
+grid.draw(ggpubr::get_legend(p1_t_leg))
+dev.off()
 
 
 
