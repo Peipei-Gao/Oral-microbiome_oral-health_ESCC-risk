@@ -9,7 +9,7 @@ setwd(paste0(path,"etagenomics/oral_micro/analysis/"))
 load("/Results/metagenome/escc/dat_inter_analysis.RData")
 
 #data pre
-gdata::keep(dat_phe,dat_spe_bac,dat_beta_pheno,Inter_spe_oral,enzyme_str,sure=T)
+gdata::keep(dat_phe,dat_spe_bac,dat_beta_pheno,Inter_spe_oral,enzyme_str,res_est_ec,res_est_pwy,sure=T)
 
 #Orl_score*PCo2----------
 var='orl_score'; var1='orl_score'; i='Bacteria'
@@ -341,7 +341,7 @@ erbar_annolg=ggplot(q_inter %>% mutate(class=factor(class,
                     aes(x=1,y=pwy_nm))+
   geom_col(aes(fill=class), color="gray30",alpha=0.85)+
   
-  scale_fill_manual(values=c('#495373','#86a48e','#c3fcf2'),#'#EFDBB9', "#91D1A2", "#00A08780", "#3C548880", "#F39B7F99"
+  scale_fill_manual(values=c('#495373','#86a48e','#c3fcf2'),
                     name='Pathway class')+
   theme_void()+
   theme(legend.position='right', 
@@ -353,7 +353,7 @@ grid::grid.draw(ggpubr::get_legend(erbar_annolg))
 dev.off()
 
 #fig 3f--
-##___plot inter enzyme----------
+##plot inter enzyme--
 final_ec <- c('EC2.4.2.1','EC2.5.1.15','EC6.3.2.12','EC1.5.1.3','EC2.3.1.8','EC2.7.4.6',"EC2.4.1.7","EC5.4.2.2","EC5.3.1.9",'EC3.6.3.14','EC4.3.2.2','EC2.2.1.1')
 
 final_ec <- c("EC3.5.99.2","EC2.7.1.50" ,'EC2.7.7.12',"EC2.7.4.6")
@@ -389,14 +389,14 @@ for (n in 1:length(final_ec)){
           axis.text.y = element_text(size=20,angle=90),
           axis.text.x = element_text(size=20),
           legend.position="none"); erbar
-  ggsave(paste0(nuts_wd,'/Bacteria/Oral_health/Inter_EC',ec_id,'.pdf'),width=5,height=5)
+  ggsave(paste0(nuts_wd,'/Bacteria/Oral_health/Inter_EC',ec_id,'.pdf'),width=8,height=8)
 }
 
 
 
 
 
-#——1.9.2.3)-enzyme-stackplot----------
+#——3f-2-enzyme-stackplot----------
 enzyme_str <- enzyme_str %>% filter(!grepl('UNGROUPED',Enzyme)) %>% 
   mutate(spe=gsub('_',' ',gsub('.*s__','',Enzyme)),
          Enzyme_id_name=paste0('EC',gsub('\\|.*','',Enzyme)) ) %>% 
@@ -428,7 +428,7 @@ for (i in final_ec){
   spe_enz_box1 <- enzyme_str %>% 
     filter(enzyme_id==i)
   spe_enz_box1$abu <- rowSums(spe_enz_box1 %>% 
-                                select(-c('spe','enzyme_id','Enzyme_id_name','Enzyme','spe_cat')),na.rm=T)
+                                select(-c('spe','enzyme_id','Enzyme_id_name','Enzyme','spe_cat')))
   cat_abu <- spe_enz_box1[,c('spe_cat','abu')] %>% 
     filter(!spe_cat %in% c('Others','unclassified')) %>% 
     arrange(desc(abu)) %>% 
@@ -454,5 +454,5 @@ for (i in final_ec){
           axis.text.y = element_text(size=20,angle=90), 
           axis.text.x = element_blank()
     )
-  ggsave(paste0(nuts_wd,"/Bacteria/Oral_health/Enzyme/Stackarea_cc_",i_nm,".pdf"),width=3,height=3)
+  ggsave(paste0(nuts_wd,"/Bacteria/Oral_health/Enzyme/Stackarea_cc_",i_nm,".pdf"),width=8,height=8)
 }
