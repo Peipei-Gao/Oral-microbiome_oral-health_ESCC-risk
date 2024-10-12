@@ -220,8 +220,9 @@ p2_r <- ggplot(dat_pcoa)+
 
 p2_t <- ggplot(dat_pcoa)+
   geom_density_ridges2(aes(x=X1,y=cc_chr,
-                           fill=cc_chr),color="grey30", 
-                       alpha=0.75,height=0.5)+
+                           fill=cc_chr),
+                           color="grey30", 
+                           alpha=0.75,height=0.5)+
   scale_fill_manual(values=escc_color)+
   scale_color_manual(values=lvl2_color)+
   theme_classic()+
@@ -246,9 +247,11 @@ p2_leg <- ggplot(dat_pcoa,aes_string(x='X1',y='X2'))+
         legend.key.spacing.x = unit(0.02,'cm'),
         legend.title =  element_text(size=20,face='bold'),
         legend.text = element_text(size=20)); p2_leg
-pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend.pdf'),width=3,height=0.5)
+pdf(paste0(sv_wd,'/Bacteria/abundance/PCoA_',var1,'_legend.pdf'),width=3,height=3)
 grid.draw(ggpubr::get_legend(p2_leg))
 dev.off()
+
+
 #density legend
 p2_2_leg <- ggplot(dat_pcoa)+
   geom_boxplot(aes(x=X1,y=cc_chr,
