@@ -1,1 +1,1 @@
-# The Comprehensive Landscape of the Oral Microbiome Reveals Its Mediating Role in the Association Between Oral Health and Esophageal Squamous Cell Carcinoma Risk
+# The Comprehensive Oral Microbiome Landscape Unveils Its Mediating Role in the Association of Oral Health with Esophageal Squamous Cell Carcinoma Risk
