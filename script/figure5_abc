@@ -1,0 +1,118 @@
+
+
+
+
+
+load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_base.RData"))
+#final_auc_spe; imp_spe; ROC_spe; cv_auc_spe 
+load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_base_bac.RData"))
+#final_auc_base_spe; imp_base_spe; ROC_base_spe; cv_auc_base_spe  
+load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_all.RData"))
+#final_auc_all; imp_all; ROC_all; cv_auc_all
+load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_kingdom.RData"))
+#final_auc_kingdom; imp_kingdom; ROC_kingdom; cv_auc_kingdom
+
+color_auc=c("#e1c05e" ,"#5e78b6","#309F9C", "#e07052")
+p1<- ggroc(list('Tradition'=roc_base,
+                 'Kingdoms'=roc_kingdom,
+                 'Species'=roc_spe,
+                 'Tradition+Species'=roc_base_spe),
+            legacy.axes = TRUE,
+            linewidth = 0.8)+
+  
+  theme_bw()+
+  xlab("1-Specificity")+
+  ylab("Sensitivity")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), 
+               size=1,linetype=2)+
+  scale_colour_manual(values = color_auc,
+                      labels=c(paste0('Tra: ',round(roc_base$auc,2)),
+                               paste0('Multi-king: ',round(roc_kingdom$auc,2)),
+                               paste0('Bac: ',round(roc_spe$auc,2)),
+                               paste0('Tra+Bac: ',round(roc_base_spe$auc,2))))+
+  geom_ribbon(
+    data = dat.ci.list[[2]],
+    aes(x = 1-x, ymin = lower, ymax = upper),
+    fill = color_auc[2],
+    inherit.aes = F) +
+  geom_ribbon(
+    data = dat.ci.list[[3]],
+    aes(x = 1-x, ymin = lower, ymax = upper),
+    fill = color_auc[3],
+    inherit.aes = F) +
+  geom_ribbon(
+    data = dat.ci.list[[1]],
+    aes(x = 1-x, ymin = lower, ymax = upper),
+    fill = color_auc[1],
+    inherit.aes = F)+
+  theme(title = element_text(size = 25,face = "bold",color="black"),
+        axis.title.x = element_text(size = 25),
+        axis.text.x=element_text(size = 25),
+        axis.text.y=element_text(size = 25,angle=90),
+        axis.title.y=element_text(size = 25),
+        legend.position.inside = c(0.8,0.2),
+        legend.text = element_text(size = 22),legend.title=element_blank()); p1
+
+###auc boxplot-----
+test_res <- roc.test(roc_base, roc_kingdom, method = "delong"); print(test_res$p.value)
+test_res <- roc.test(roc_kingdom, roc_spe, method = "delong"); print(test_res$p.value)
+test_res <- roc.test(roc_spe, roc_base_spe, method = "delong"); print(test_res$p.value)
+test_res <- roc.test(roc_base, roc_spe, method = "delong"); print(test_res$p.value)
+test_res <- roc.test(roc_kingdom, roc_base_spe, method = "delong"); print(test_res$p.value)
+test_res <- roc.test(roc_base, roc_base_spe, method = "delong"); print(test_res$p.value)
+
+auc_df=data.frame('Tra'= auc_base,
+                  'Multi_king'= auc_kingdom,
+                  'Bac'= auc_spe,
+                  'Tra_Bac'= auc_base_spe) %>% 
+  reshape2::melt(value.name='auc') %>% setnames(c('group','auc'))
+#summary(auc_df[auc_df$group=='Tra_Bac',]$auc)
+
+p2=ggplot(auc_df,aes(x=group,y=auc))+
+  geom_boxplot(aes(fill=group),size=0.5)+
+  geom_point(aes(color=group))+
+  scale_fill_manual(values=color_auc)+
+  scale_color_manual(values=color_auc)+
+  scale_x_discrete(labels=c('Tra', 'Multi-king','Bac','Tra+Bac'))+
+  geom_segment(aes(x = 1, xend = 2, y = 0.8, yend = 0.8), color="gray") +  
+  geom_segment(aes(x = 2, xend = 3, y = 0.81, yend = 0.81), color="gray") +  
+  geom_segment(aes(x = 3, xend = 4, y = 0.82, yend = 0.82), color="gray") +  
+  geom_segment(aes(x = 1, xend = 3, y = 0.83, yend = 0.83), color="gray") +  
+  geom_segment(aes(x = 1, xend = 4, y = 0.85, yend = 0.85), color="gray") + 
+  annotate("text", x = 1.5, y = 0.805, label = "****", size = 4.5) +  
+  annotate("text", x = 2.5, y = 0.815, label = "*", size = 4.5) +  
+  annotate("text", x = 2, y = 0.835, label = "****", size = 4.5) +
+  annotate("text", x = 2.5, y = 0.855, label = "****", size = 4.5) +
+  labs(x='Model',y='AUROC')+
+  theme_few()+ 
+  theme(plot.title = element_text(size=16),
+        axis.title.x = element_text(size = 25),
+        axis.text.x=element_text(size = 25),
+        axis.text.y=element_text(size = 25,angle=90),
+        axis.title.y=element_text(size = 25)); p2
+
+pdf(paste0(nuts_wd,"/batchAll/random_forest/AUC_plot.pdf"),width=10,height=5)
+egg::ggarrange(p1,p2,nrow=1,widths=c(1,1))
+dev.off()
+
+
+
+### feature importance-------
+dat_imp=imp_base_spe %>% arrange(desc(MeanDecreaseGini)) %>% 
+  mutate(feature=gsub('^s ','',gsub('_',' ',feature))) %>% 
+  mutate(feature=factor(feature,levels=rev(unique(feature))))
+
+p3 <- ggplot(dat_imp[1:10,],aes(x = MeanDecreaseGini, y = feature))+
+  geom_bar(stat="identity",fill="#e07052")+
+  theme_classic()+labs(y='', x='Importance')+ 
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 25),
+        axis.text.x=element_text(size = 25),
+        axis.text.y=element_text(size = 25,face='italic'),
+        axis.title.y=element_text(size = 25)); p3
+pdf(paste0(nuts_wd,"/batchAll/random_forest/AUC_feature.pdf"),width=10,height=5)
+p3
+dev.off()
+
