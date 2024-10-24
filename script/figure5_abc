@@ -1,8 +1,14 @@
+##############################################################################################################################################
+#
+# randome forest classification models, compared four models: 
+# (1) a basic model including traditional risk factors including age, sex, family history of EC, BMI from 10 years ago, family wealth score, smoking, alcohol drinking, tea drinking, and oral health score; 
+# (2) a model that incorporated species-level taxonomic relative abundances from multi-kingdom profiles, including bacteria, archaea, viruses, and fungi; 
+# (3) a model focused on species-level taxonomic relative abundances of bacteria; 
+# (4) a model that combined traditional risk factors with species relative abundance data for bacteria.
+#
+##############################################################################################################################################
 
-
-
-
-
+pacman::p_load(caret,randomForest,pROC)
 load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_base.RData"))
 #final_auc_spe; imp_spe; ROC_spe; cv_auc_spe 
 load(file=paste0(nuts_wd,"/batchAll/random_forest/train_model/ROC_escc_train_base_bac.RData"))
