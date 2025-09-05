@@ -105,20 +105,4 @@ dev.off()
 
 
 
-### feature importance-------
-dat_imp=imp_base_spe %>% arrange(desc(MeanDecreaseGini)) %>% 
-  mutate(feature=gsub('^s ','',gsub('_',' ',feature))) %>% 
-  mutate(feature=factor(feature,levels=rev(unique(feature))))
-
-p3 <- ggplot(dat_imp[1:10,],aes(x = MeanDecreaseGini, y = feature))+
-  geom_bar(stat="identity",fill="#e07052")+
-  theme_classic()+labs(y='', x='Importance')+ 
-  theme(legend.position = "none",
-        axis.title.x = element_text(size = 25),
-        axis.text.x=element_text(size = 25),
-        axis.text.y=element_text(size = 25,face='italic'),
-        axis.title.y=element_text(size = 25)); p3
-pdf(paste0(nuts_wd,"/batchAll/random_forest/AUC_feature.pdf"),width=10,height=5)
-p3
-dev.off()
 
