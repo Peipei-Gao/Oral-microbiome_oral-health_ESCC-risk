@@ -442,5 +442,65 @@ pdf(paste0(sv_wd,"/Bacteria/Maaslin_CC_j/Scatter_spe_cc_orlscore.pdf"),
 egg::ggarrange(plots1,plots2,nrow=2)
 dev.off()
 
+#beta coeff in spe--
+data1 = res_orl_cc_sig 
+tst=corr.test(data1$Beta.y,data1$Beta.x)
+(rh=format(round(tst$r,3),nsmall=3,method='spearman'))
+
+color_g=c('#E2628A','#42b540', '#5050ff')
+p1=ggplot(data1,aes(x=Beta.x,y=Beta.y)) +
+  geom_point(aes(fill=mark),alpha=1,color='white',shape=23,size=2.8,stroke=0.33) +
+  scale_fill_manual(values=color_g,name='',
+                    labels=c('ESCC unique','Oral health risk score unique','Overlap'))+
+  stat_smooth(method='lm',color='#00c3fb',fill='#00c3fb',alpha=0.2)+
+  labs(x='Effect size of taxa (ESCC)',y='Effect size of taxa (Oral health risk score)')+
+  annotate('text',label=bquote(paste('rho='~.(rh))),
+           x=max_v,y=may_v,size=4,hjust=0)+
+  geom_text_repel(
+    data = subset(data1, (anno=='yes')),
+    aes(label = spe),          
+    size = 3,   fontface = "italic",   
+    segment.size = 0.4,            
+    min.segment.length = 0.1
+  ) +
+  geom_vline(xintercept=0,linetype="dashed",color="gray40")+
+  geom_hline(yintercept = 0, linetype="dashed",color="gray40") +
+  theme_few()+
+  theme(panel.grid.minor = element_blank(),
+        plot.title=element_blank(),legend.position='none',
+        axis.title=element_text(size=13),
+        axis.text.y = element_text(size=13,angle=90,hjust=0.5),
+        axis.text.x = element_text(size=13,hjust=0.4)); p1
 
 
+pdf(paste0(nuts_wd,'/batchALL/Oral_ESC_scatter_correlation.pdf'),
+    widt=4,height=4)
+p1
+dev.off()
+
+#pathway plot
+p1 <- ggplot(res, aes(x = OR, y = p_lg)) +
+  geom_point(aes(fill = Class),  color='white',size=5) +  
+  scale_fill_manual(values=cor_cls)+
+  geom_hline(yintercept = -log(0.05, 10), linetype = "dashed", color = "red", linewidth = 0.3) +
+  #geom_hline(yintercept = -log(0.15, 10), linetype = "dashed", color = "pink3", linewidth = 0.3) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray", linewidth = 0.3) +
+  geom_text_repel(
+    data = subset(res, qval < 0.05), 
+    aes(label = Feature),  
+    size = 2.3,  
+    segment.size = 0.4 
+    min.segment.length = 0.2 
+  ) +
+  # scale_x_continuous(expand = c(0.1, 0.1)) +
+  # scale_y_continuous(expand = c(0.02, 0.02)) +
+  labs(x = 'Effect size of pathway (ESCC)') +
+  theme_few() +
+  theme(legend.position = 'none',
+        axis.title = element_text(size = 11),
+        axis.text.x = element_text(size = 11,hjust=0.9),
+        axis.text.y = element_text(size = 11, angle = 90, hjust = 0.5)); #p1
+pdf(paste0(nuts_wd,'/batchALL/Pathway_volcano.pdf'),
+    width=3.5,height=3.5)
+p1
+dev.off()
